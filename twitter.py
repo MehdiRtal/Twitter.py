@@ -7,6 +7,7 @@ import re
 class Twitter:
     def __init__(self, auth_token: str = None, csrf_token: str = None, proxy: str = None):
         self.session = requests.Session()
+        self.csrf_token = csrf_token
         if proxy:
             self.session.proxies.update({
                 "http": f"http://{proxy}",
@@ -20,7 +21,7 @@ class Twitter:
                 page.goto("https://twitter.com/")
                 for cookies in context.cookies():
                     if cookies["name"] == "ct0":
-                        csrf_token = cookies["value"]
+                        self.csrf_token = cookies["value"]
                 browser.close()
         self.session.headers.update({
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
@@ -28,7 +29,7 @@ class Twitter:
         })
         self.session.cookies.update({
             "auth_token": auth_token,
-            "ct0": csrf_token
+            "ct0": self.csrf_token
         })
 
     def __get_user_id(self, username: str):
