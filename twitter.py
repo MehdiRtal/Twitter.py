@@ -1,30 +1,20 @@
-from playwright.sync_api import sync_playwright
 import httpx
 import json
 import re
+import secrets
 
 
 class Twitter:
-    def __init__(self, auth_token: str = None, csrf_token: str = None, proxy: str = None):
+    def __init__(self, auth_token: str = None, proxy: str = None):
         self.client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
-        self.csrf_token = csrf_token
-        if not self.csrf_token:
-            with sync_playwright() as p:
-                browser = p.chromium.launch()
-                context = browser.new_context()
-                page = context.new_page()
-                page.goto("https://twitter.com/")
-                for cookies in context.cookies():
-                    if cookies["name"] == "ct0":
-                        self.csrf_token = cookies["value"]
-                browser.close()
+        csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
         self.client.headers.update({
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-            "X-Csrf-Token": self.csrf_token
+            "X-Csrf-Token": csrf_token
         })
         self.client.cookies.update({
             "auth_token": auth_token,
-            "ct0": self.csrf_token
+            "ct0": csrf_token
         })
 
     def __get_user_id(self, username: str):
@@ -160,6 +150,7 @@ class Twitter:
         if r.status_code != 200 or "errors" in data:
             raise Exception(data["errors"][0]["message"])
         entries = data["data"]["threaded_conversation_with_injections_v2"]["instructions"][0]["entries"]
+        print(entries)
         tweets = []
         for entry in entries:
             if "tweet" in entry["entryId"]:
