@@ -165,7 +165,7 @@ class Twitter:
                     if tweet["type"] == "photo":
                         tweets.append({"Type": "image", "media": tweet["media_url_https"], "thumbnail": tweet["media_url_https"]})
                     elif tweet["type"] == "video" or tweet["type"] == "animated_gif":
-                        for video in tweet["video_info"]["variants"]:
+                        for video in sorted(tweet["video_info"]["variants"], key=lambda x: x["bitrate"], reverse=True):
                             if video["content_type"] == "video/mp4":
                                 tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
                                 break
