@@ -5,7 +5,7 @@ import secrets
 
 
 class Twitter:
-    def __init__(self, auth_token: str = None, proxy: str = None):
+    def __init__(self, auth_token: str, proxy: str = None):
         self.client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
         self.client.headers.update({
