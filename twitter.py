@@ -17,7 +17,7 @@ class Twitter:
             "ct0": csrf_token
         })
 
-    def __get_user_id(self, username: str):
+    def _get_user_id(self, username: str):
         params = {
             "variables": json.dumps({
                 "screen_name": username,
@@ -43,7 +43,7 @@ class Twitter:
         r.raise_for_status()
         return r.json()["data"]["user"]["result"]["rest_id"]
 
-    def __get_tweet_id(self, url: str):
+    def _get_tweet_id(self, url: str):
         return re.search(r"\/status\/(\d+)", url).group(1)
 
     def tweet(self, url: str, text: str):
@@ -51,7 +51,7 @@ class Twitter:
             "variables": {
                 "tweet_text": text,
                 "reply": {
-                    "in_reply_to_tweet_id": self.__get_tweet_id(url),
+                    "in_reply_to_tweet_id": self._get_tweet_id(url),
                     "exclude_reply_user_ids": []
                 },
                 "dark_request": False,
@@ -88,7 +88,7 @@ class Twitter:
     def retweet(self, url: str):
         json = {
             "variables": {
-                "tweet_id": self.__get_tweet_id(url),
+                "tweet_id": self._get_tweet_id(url),
                 "dark_request": False
             },
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
@@ -98,19 +98,19 @@ class Twitter:
     def like_tweet(self, url: str):
         json = {
             "variables": {
-                "tweet_id": self.__get_tweet_id(url)
+                "tweet_id": self._get_tweet_id(url)
             },
             "queryId": "lI07N6Otwv1PhnEgXILM7A"
         }
         self.client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", json=json).raise_for_status()
 
     def follow_user(self, username: str):
-        self.client.post("https://twitter.com/i/api/1.1/friendships/create.json", params={"user_id": self.__get_user_id(username)}).raise_for_status()
+        self.client.post("https://twitter.com/i/api/1.1/friendships/create.json", params={"user_id": self._get_user_id(username)}).raise_for_status()
 
     def get_tweet(self, url: str):
         params = {
             "variables": json.dumps({
-                "focalTweetId": self.__get_tweet_id(url),
+                "focalTweetId": self._get_tweet_id(url),
                 "with_rux_injections": False,
                 "includePromotedContent": True,
                 "withCommunity": True,
