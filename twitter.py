@@ -2,20 +2,66 @@ import httpx
 import json
 import re
 import secrets
+from twocaptcha import TwoCaptcha
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
 
 
 class Twitter:
     def __init__(self, auth_token: str, proxy: str = None):
         self.client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
+        ua = UserAgent()
         self.client.headers.update({
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-            "X-Csrf-Token": csrf_token
+            "X-Csrf-Token": csrf_token,
+            "User-Agent": ua.chrome,
         })
         self.client.cookies.update({
             "auth_token": auth_token,
-            "ct0": csrf_token
+            #"ct0": csrf_token
         })
+        self._solve_captcha()
+
+
+    def _solve_captcha(self):
+        headers = {
+            "Authorization": "",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1"
+        }
+        r = self.client.get("https://twitter.com/account/access", headers=headers, follow_redirects=True)
+        if "access" in str(r.url):
+            soup = BeautifulSoup(r.text, "html.parser")
+            authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
+            assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
+            solver = TwoCaptcha("")
+            token = solver.funcaptcha(sitekey="", url=str(r.url))["code"]
+
+            headers = {
+                "Authorization": "",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Encoding": "gzip, deflate",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
+            body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=fr&flow=&verification_string=&language_code=fr"
+            r = self.client.post("https://twitter.com/account/access", headers=headers)
+        print(r.url)
+        print(r.text)
+
+
 
     def _get_user_id(self, username: str):
         params = {
@@ -150,7 +196,6 @@ class Twitter:
         if r.status_code != 200 or "errors" in data:
             raise Exception(data["errors"][0]["message"])
         entries = data["data"]["threaded_conversation_with_injections_v2"]["instructions"][0]["entries"]
-        print(entries)
         tweets = []
         for entry in entries:
             if "tweet" in entry["entryId"]:
@@ -170,3 +215,6 @@ class Twitter:
                                 tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
                                 break
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
+
+if __name__ == "__main__":
+    t = Twitter("7bb5d0b8e2c7d3dee37d0fab04046f62d074ab7e")
