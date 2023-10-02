@@ -58,7 +58,6 @@ class Twitter:
                 for _ in range(3):
                     try:
                         token = solver.funcaptcha(sitekey="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")["code"]
-                        print(token)
                     except:
                         continue
                     else:
