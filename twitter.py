@@ -62,7 +62,7 @@ class Twitter:
             authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
             assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
-            while True:
+            for _ in range(2):
                 solver = TwoCaptcha("3e1c3bf68a399d50311bff0c60dfbe55", defaultTimeout=500)
                 for _ in range(3):
                     try:
@@ -75,13 +75,13 @@ class Twitter:
                     raise Exception("Failed to solve captcha")
                 body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow=&verification_string={urllib.parse.quote(token)}&language_code=en"
                 r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
-                with open("test.html", "w", encoding="utf-8") as f:
-                    f.write(r.text)
                 soup = BeautifulSoup(r.text, "html.parser")
                 if not soup.find("form", {"id": "arkose_form"}):
                     authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
                     assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
                     break
+            else:
+                raise Exception("Failed to solve captcha")
 
             body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
             r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
