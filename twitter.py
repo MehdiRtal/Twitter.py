@@ -5,24 +5,24 @@ import secrets
 from twocaptcha import TwoCaptcha
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
+import urllib.parse
 
 
 class Twitter:
     def __init__(self, auth_token: str, proxy: str = None):
-        self.client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
+        self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
         ua = UserAgent()
-        self.client.headers.update({
+        self._client.headers.update({
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
             "X-Csrf-Token": csrf_token,
             "User-Agent": ua.chrome,
         })
-        self.client.cookies.update({
+        self._client.cookies.update({
             "auth_token": auth_token,
-            #"ct0": csrf_token
+            "ct0": csrf_token
         })
         self._solve_captcha()
-
 
     def _solve_captcha(self):
         headers = {
@@ -36,16 +36,15 @@ class Twitter:
             "Sec-Fetch-User": "?1",
             "Upgrade-Insecure-Requests": "1"
         }
-        r = self.client.get("https://twitter.com/account/access", headers=headers, follow_redirects=True)
+        r = self._client.get("https://twitter.com/account/access", headers=headers, follow_redirects=True)
         if "access" in str(r.url):
             soup = BeautifulSoup(r.text, "html.parser")
             authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
             assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
-            solver = TwoCaptcha("")
-            token = solver.funcaptcha(sitekey="", url=str(r.url))["code"]
 
             headers = {
                 "Authorization": "",
+                "Referer": "https://twitter.com/account/access",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "Accept-Encoding": "gzip, deflate",
                 "Accept-Language": "en-US,en;q=0.9",
@@ -56,12 +55,36 @@ class Twitter:
                 "Sec-Fetch-User": "?1",
                 "Upgrade-Insecure-Requests": "1"
             }
-            body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=fr&flow=&verification_string=&language_code=fr"
-            r = self.client.post("https://twitter.com/account/access", headers=headers)
-        print(r.url)
-        print(r.text)
 
+            body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
+            r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
+            soup = BeautifulSoup(r.text, "html.parser")
+            authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
+            assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
+            while True:
+                solver = TwoCaptcha("3e1c3bf68a399d50311bff0c60dfbe55", defaultTimeout=500)
+                for _ in range(3):
+                    try:
+                        token = solver.funcaptcha(sitekey="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")["code"]
+                    except:
+                        continue
+                    else:
+                        break
+                else:
+                    raise Exception("Failed to solve captcha")
+                body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow=&verification_string={urllib.parse.quote(token)}&language_code=en"
+                r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
+                with open("test.html", "w", encoding="utf-8") as f:
+                    f.write(r.text)
+                soup = BeautifulSoup(r.text, "html.parser")
+                if not soup.find("form", {"id": "arkose_form"}):
+                    authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
+                    assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
+                    break
+
+            body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
+            r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
 
     def _get_user_id(self, username: str):
         params = {
@@ -85,7 +108,7 @@ class Twitter:
                 "withAuxiliaryUserLabels": False
             }),
         }
-        r = self.client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", params=params)
+        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", params=params)
         r.raise_for_status()
         return r.json()["data"]["user"]["result"]["rest_id"]
 
@@ -129,7 +152,7 @@ class Twitter:
             },
             "queryId": "SoVnbfCycZ7fERGCwpZkYA"
         }
-        self.client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", json=json).raise_for_status()
+        self._client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", json=json).raise_for_status()
 
     def retweet(self, url: str):
         json = {
@@ -139,7 +162,7 @@ class Twitter:
             },
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
         }
-        self.client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", json=json).raise_for_status()
+        self._client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", json=json).raise_for_status()
 
     def like_tweet(self, url: str):
         json = {
@@ -148,10 +171,10 @@ class Twitter:
             },
             "queryId": "lI07N6Otwv1PhnEgXILM7A"
         }
-        self.client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", json=json).raise_for_status()
+        self._client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", json=json).raise_for_status()
 
     def follow_user(self, username: str):
-        self.client.post("https://twitter.com/i/api/1.1/friendships/create.json", params={"user_id": self._get_user_id(username)}).raise_for_status()
+        self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", params={"user_id": self._get_user_id(username)}).raise_for_status()
 
     def get_tweet(self, url: str):
         params = {
@@ -191,7 +214,7 @@ class Twitter:
                 "withArticleRichContentState": False
             })
         }
-        r = self.client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", params=params)
+        r = self._client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", params=params)
         data = r.json()
         if r.status_code != 200 or "errors" in data:
             raise Exception(data["errors"][0]["message"])
@@ -217,4 +240,4 @@ class Twitter:
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
 
 if __name__ == "__main__":
-    t = Twitter("7bb5d0b8e2c7d3dee37d0fab04046f62d074ab7e")
+    t = Twitter("3e28d2b43e0b0ccb7e363fce6c59236e2c969e65")
