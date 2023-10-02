@@ -2,15 +2,16 @@ import httpx
 import json
 import re
 import secrets
-from twocaptcha import TwoCaptcha
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import urllib.parse
+import capsolver
+
 
 
 class Twitter:
-    def __init__(self, auth_token: str, proxy: str = None, twocaptcha_api_key: str = None):
-        self._two_captcha_api_key = twocaptcha_api_key
+    def __init__(self, auth_token: str, proxy: str = None, capsolver_api_key: str = None):
+        self._capsolver_api_key = capsolver_api_key
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
         ua = UserAgent()
@@ -54,16 +55,12 @@ class Twitter:
             assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
             for _ in range(2):
-                solver = TwoCaptcha(self._two_captcha_api_key, defaultTimeout=500)
-                for _ in range(3):
-                    try:
-                        token = solver.funcaptcha(sitekey="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")["code"]
-                    except:
-                        continue
-                    else:
-                        break
-                else:
-                    raise Exception("Failed to solve captcha")
+                capsolver.api_key = self._capsolver_api_key
+                token = capsolver.solve({
+                    "type": "FunCaptchaTaskProxyLess",
+                    "websitePublicKey": "0152B4EB-D2DC-460A-89A1-629838B529C9",
+                    "websiteURL": "https://twitter.com/account/access",
+                })["token"]
                 body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow=&verification_string={urllib.parse.quote(token)}&language_code=en"
                 r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
                 soup = BeautifulSoup(r.text, "html.parser")
@@ -229,6 +226,3 @@ class Twitter:
                                 tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
                                 break
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
-
-if __name__ == "__main__":
-    t = Twitter(auth_token="e51aeec754eee092c8186d412741c72e52171752", twocaptcha_api_key="3e1c3bf68a399d50311bff0c60dfbe55")
