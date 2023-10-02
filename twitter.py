@@ -23,9 +23,8 @@ class Twitter:
             "auth_token": auth_token,
             "ct0": csrf_token
         })
-        self._solve_captcha()
 
-    def _solve_captcha(self):
+    def solve_captcha(self):
         headers = {
             "Authorization": "",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
