@@ -9,7 +9,8 @@ import urllib.parse
 
 
 class Twitter:
-    def __init__(self, auth_token: str, proxy: str = None):
+    def __init__(self, auth_token: str, proxy: str = None, twocaptcha_api_key: str = None):
+        self._two_captcha_api_key = twocaptcha_api_key
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
         ua = UserAgent()
@@ -42,19 +43,10 @@ class Twitter:
             authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
             assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
-            headers = {
-                "Authorization": "",
+            headers.update({
                 "Referer": "https://twitter.com/account/access",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Accept-Encoding": "gzip, deflate",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "same-origin",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
+                "Content-Type": "application/x-www-form-urlencoded"
+            })
 
             body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
             r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
@@ -63,10 +55,11 @@ class Twitter:
             assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
             for _ in range(2):
-                solver = TwoCaptcha("3e1c3bf68a399d50311bff0c60dfbe55", defaultTimeout=500)
+                solver = TwoCaptcha(self._two_captcha_api_key, defaultTimeout=500)
                 for _ in range(3):
                     try:
                         token = solver.funcaptcha(sitekey="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")["code"]
+                        print(token)
                     except:
                         continue
                     else:
@@ -240,4 +233,4 @@ class Twitter:
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
 
 if __name__ == "__main__":
-    t = Twitter("3e28d2b43e0b0ccb7e363fce6c59236e2c969e65")
+    t = Twitter(auth_token="e51aeec754eee092c8186d412741c72e52171752", twocaptcha_api_key="3e1c3bf68a399d50311bff0c60dfbe55")
