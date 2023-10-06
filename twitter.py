@@ -48,13 +48,14 @@ class Twitter:
                 "Content-Type": "application/x-www-form-urlencoded"
             })
 
-            body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
-            r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
-            soup = BeautifulSoup(r.text, "html.parser")
-            authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
-            assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
+            if not soup.find("form", {"id": "arkose_form"}):
+                body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
+                r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
+                soup = BeautifulSoup(r.text, "html.parser")
+                authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
+                assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
-            for _ in range(2):
+            for _ in range(3):
                 capsolver.api_key = self._capsolver_api_key
                 token = capsolver.solve({
                     "type": "FunCaptchaTaskProxyLess",
@@ -64,9 +65,9 @@ class Twitter:
                 body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow=&verification_string={urllib.parse.quote(token)}&language_code=en"
                 r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
                 soup = BeautifulSoup(r.text, "html.parser")
+                authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
+                assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
                 if not soup.find("form", {"id": "arkose_form"}):
-                    authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
-                    assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
                     break
             else:
                 raise Exception("Failed to solve captcha")
@@ -226,3 +227,7 @@ class Twitter:
                                 tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
                                 break
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
+
+if __name__ == "__main__":
+    tt = Twitter(auth_token="faf4cabd3782ab282bbf784fe2991ca403add902", capsolver_api_key="CAP-7DA9C3EADAB1BA69FBBC65C4625A3C57")
+    tt.solve_captcha()
