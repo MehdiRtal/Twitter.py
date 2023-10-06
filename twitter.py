@@ -227,7 +227,3 @@ class Twitter:
                                 tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
                                 break
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
-
-if __name__ == "__main__":
-    tt = Twitter(auth_token="faf4cabd3782ab282bbf784fe2991ca403add902", capsolver_api_key="CAP-7DA9C3EADAB1BA69FBBC65C4625A3C57")
-    tt.solve_captcha()
