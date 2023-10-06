@@ -65,10 +65,10 @@ class Twitter:
                 body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow=&verification_string={urllib.parse.quote(token)}&language_code=en"
                 r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
                 soup = BeautifulSoup(r.text, "html.parser")
-                authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
-                assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
                 if not soup.find("form", {"id": "arkose_form"}):
                     break
+                authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
+                assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
             else:
                 raise Exception("Failed to solve captcha")
 
