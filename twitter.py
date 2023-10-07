@@ -10,7 +10,7 @@ import hashlib
 
 
 class Twitter:
-    def __init__(self, auth_token: str, proxy: str = None, capsolver_api_key: str = None):
+    def __init__(self, proxy: str = None, capsolver_api_key: str = None):
         self._capsolver_api_key = capsolver_api_key
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
@@ -21,8 +21,41 @@ class Twitter:
             "User-Agent": ua.chrome,
         })
         self._client.cookies.update({
-            "auth_token": auth_token,
             "ct0": csrf_token
+        })
+
+    def _get_user_id(self, username: str):
+        params = {
+            "variables": json.dumps({
+                "screen_name": username,
+                "withSafetyModeUserFields": True
+            }),
+            "features": json.dumps({
+                "hidden_profile_likes_enabled": False,
+                "hidden_profile_subscriptions_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "subscriptions_verification_info_is_identity_verified_enabled": False,
+                "subscriptions_verification_info_verified_since_enabled": True,
+                "highlights_tweets_tab_ui_enabled": True,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "responsive_web_graphql_timeline_navigation_enabled": True
+            }),
+            "fieldToggles": json.dumps({
+                "withAuxiliaryUserLabels": False
+            }),
+        }
+        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", params=params)
+        r.raise_for_status()
+        return r.json()["data"]["user"]["result"]["rest_id"]
+
+    def _get_tweet_id(self, url: str):
+        return re.search(r"\/status\/(\d+)", url).group(1)
+
+    def login(self, auth_token: str):
+        self._client.cookies.update({
+            "auth_token": auth_token
         })
 
     def solve_captcha(self):
@@ -75,35 +108,6 @@ class Twitter:
             body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
             r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
 
-    def _get_user_id(self, username: str):
-        params = {
-            "variables": json.dumps({
-                "screen_name": username,
-                "withSafetyModeUserFields": True
-            }),
-            "features": json.dumps({
-                "hidden_profile_likes_enabled": False,
-                "hidden_profile_subscriptions_enabled": True,
-                "responsive_web_graphql_exclude_directive_enabled": True,
-                "verified_phone_label_enabled": False,
-                "subscriptions_verification_info_is_identity_verified_enabled": False,
-                "subscriptions_verification_info_verified_since_enabled": True,
-                "highlights_tweets_tab_ui_enabled": True,
-                "creator_subscriptions_tweet_preview_api_enabled": True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-                "responsive_web_graphql_timeline_navigation_enabled": True
-            }),
-            "fieldToggles": json.dumps({
-                "withAuxiliaryUserLabels": False
-            }),
-        }
-        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", params=params)
-        r.raise_for_status()
-        return r.json()["data"]["user"]["result"]["rest_id"]
-
-    def _get_tweet_id(self, url: str):
-        return re.search(r"\/status\/(\d+)", url).group(1)
-
     def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
         if avatar:
             params = {
@@ -149,6 +153,7 @@ class Twitter:
             body = f"include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&include_can_media_tag=1&include_ext_has_nft_avatar=1&include_ext_is_blue_verified=1&include_ext_verified_type=1&include_ext_profile_image_shape=1&skip_status=1&return_user=true&media_id={media_id}"
             r = self._client.post("https://api.twitter.com/1.1/account/update_profile_image.json", headers=headers, data=body)
             r.raise_for_status()
+
         if name or bio:
             headers = {
                 "Content-Type": "application/x-www-form-urlencoded"
@@ -289,3 +294,168 @@ class Twitter:
                                 tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
                                 break
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
+
+    def signup(self):
+        email = "icucoaoosus@hldrive.com"
+        password = "zarazrazraz@@131"
+
+        headers = {
+            "X-Guest-Token": "1710641940763480275"
+        }
+
+        body = {
+            "input_flow_data": {
+                "requested_variant": "{\"signup_type\":\"phone_email\"}",
+                "flow_context": {
+                    "debug_overrides": {},
+                    "start_location": {
+                        "location": "unknown"
+                    }
+                }
+            },
+            "subtask_versions": {
+                "action_list": 2,
+                "alert_dialog": 1,
+                "app_download_cta": 1,
+                "check_logged_in_account": 1,
+                "choice_selection": 3,
+                "contacts_live_sync_permission_prompt": 0,
+                "cta": 7,
+                "email_verification": 2,
+                "end_flow": 1,
+                "enter_date": 1,
+                "enter_email": 2,
+                "enter_password": 5,
+                "enter_phone": 2,
+                "enter_recaptcha": 1,
+                "enter_text": 5,
+                "enter_username": 2,
+                "generic_urt": 3,
+                "in_app_notification": 1,
+                "interest_picker": 3,
+                "js_instrumentation": 1,
+                "menu_dialog": 1,
+                "notifications_permission_prompt": 2,
+                "open_account": 2,
+                "open_home_timeline": 1,
+                "open_link": 1,
+                "phone_verification": 4,
+                "privacy_options": 1,
+                "security_key": 3,
+                "select_avatar": 4,
+                "select_banner": 2,
+                "settings_list": 7,
+                "show_code": 1,
+                "sign_up": 2,
+                "sign_up_review": 4,
+                "tweet_selection_urt": 1,
+                "update_users": 1,
+                "upload_media": 1,
+                "user_recommendations_list": 4,
+                "user_recommendations_urt": 1,
+                "wait_spinner": 3,
+                "web_modal": 1
+            }
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json?flow_name=signup", headers=headers, json=body)
+        r.raise_for_status()
+        data = r.json()
+        flow_token = data["flow_token"]
+
+        body = {
+            "email": email,
+            "display_name": "Mehdi",
+            "flow_token": flow_token
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
+        r.raise_for_status()
+
+        otp = input("OTP: ")
+        capsolver.api_key = self._capsolver_api_key
+        token = capsolver.solve({
+            "type": "FunCaptchaTaskProxyLess",
+            "websitePublicKey": "2CB16598-CB82-4CF7-B332-5990DB66F3AB",
+            "websiteURL": "https://twitter.com/i/flow/signup",
+        })["token"]
+        body = {
+            "flow_token": flow_token,
+            "subtask_inputs": [
+                {
+                    "subtask_id": "Signup",
+                    "sign_up": {
+                        "js_instrumentation": {
+                            "response": "{\"rf\":{\"aec29a33abb6d501d849f8764f07a717f2a1af91b4016a54ddff27d61ad12904\":0,\"b284d610ea4a6c28fcf9d8f080dc620d47e95e0f52ef0e59474f6565fec72c16\":73,\"a795edb67b41a593988756fa347d1d8ea229b930fef131d1d485604b2b413f61\":-1,\"a9c47edacfa61fa4ea26d89720ca8f51da1a70192b4495bb773e06028025700e\":0},\"s\":\"GkcsR5JHI7K9v_BviYnQEZN89MfKyxK-RjMoYCrqqjbLZlrVqxe50K98KKIKjiTQxPN8I32yVs5sAiLDUYLpV-My7h8qa9azG1zYckUaga-f4jkuQdyDzBvgxNHH4aKMC9nsJ0w794xqBTHA5c-ocreDWYWuwUWSXchHdp9HtAdQzCVQY4JrucVggxZZVphm1HCbi7ylqyvXa4Tp0SfOBYsu1ZzAYvaSux2q_dteHW26uoWrjhlBdBJGzSoSovw4TMbTJRMo0MiFUhBWlKw2HMJdlt3eBxaPdbPBVySyAagWbEwjQOt6rYgeCnj9ukS7-i2xBbufkH8KbA_-SOW_qwAAAYsKCiZW\"}"
+                        },
+                        "link": "email_next_link",
+                        "name": "Mehdi",
+                        "email": email,
+                        "birthday": {
+                            "day": 8,
+                            "month": 5,
+                            "year": 2003
+                        },
+                        "personalization_settings": {
+                            "allow_cookie_use": True,
+                            "allow_device_personalization": True,
+                            "allow_partnerships": True,
+                            "allow_ads_personalization": True
+                        }
+                    }
+                },
+                {
+                    "subtask_id": "SignupSettingsListEmailNonEU",
+                    "settings_list": {
+                        "setting_responses": [
+                            {
+                                "key": "twitter_for_web",
+                                "response_data": {
+                                    "boolean_data": {
+                                        "result": True
+                                    }
+                                }
+                            }
+                        ],
+                        "link": "next_link"
+                    }
+                },
+                {
+                    "subtask_id": "SignupReview",
+                    "sign_up_review": {
+                        "link": "signup_with_email_next_link"
+                    }
+                },
+                {
+                    "subtask_id": "ArkoseEmail",
+                    "web_modal": {
+                        "completion_deeplink": f"twitter://onboarding/web_modal/next_link?access_token={token}",
+                        "link": "signup_with_email_next_link"
+                    }
+                },
+                {
+                    "subtask_id": "EmailVerification",
+                    "email_verification": {
+                        "code": otp,
+                        "email": email,
+                        "link": "next_link"
+                    }
+                }
+            ]
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+        r.raise_for_status()
+
+        body = {
+            "flow_token": flow_token,
+            "subtask_inputs": [
+                {
+                    "subtask_id": "EnterPassword",
+                    "enter_password": {
+                        "password": password,
+                        "link": "next_link"
+                    }
+                }
+            ]
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+        print(r.text)
+        print(r.cookies)
