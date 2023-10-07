@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import urllib.parse
 import capsolver
-
+import hashlib
 
 
 class Twitter:
@@ -104,8 +104,67 @@ class Twitter:
     def _get_tweet_id(self, url: str):
         return re.search(r"\/status\/(\d+)", url).group(1)
 
+    def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
+        if avatar:
+            params = {
+                "command": "INIT",
+                "total_bytes": len(avatar),
+                "media_type": "image/jpeg"
+            }
+            headers = {
+                "Referer": "https://twitter.com/"
+            }
+            r = self._client.post("https://upload.twitter.com/i/media/upload.json", params=params, headers=headers)
+            r.raise_for_status()
+            media_id = r.json()["media_id"]
+
+            headers = {
+                "Referer": "https://twitter.com/"
+            }
+            files = {
+                "media": ("blob", avatar, "application/octet-stream")
+            }
+            params = {
+                "command": "APPEND",
+                "media_id": media_id,
+                "segment_index": 0
+            }
+            r = self._client.post("https://upload.twitter.com/i/media/upload.json", params=params, headers=headers, files=files)
+            r.raise_for_status()
+
+            headers = {
+                "Referer": "https://twitter.com/"
+            }
+            params = {
+                "command": "FINALIZE",
+                "media_id": media_id,
+                "original_md5": hashlib.md5(avatar).hexdigest()
+            }
+            r = self._client.post("https://upload.twitter.com/i/media/upload.json", params=params, headers=headers)
+            r.raise_for_status()
+
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            body = f"include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&include_can_media_tag=1&include_ext_has_nft_avatar=1&include_ext_is_blue_verified=1&include_ext_verified_type=1&include_ext_profile_image_shape=1&skip_status=1&return_user=true&media_id={media_id}"
+            r = self._client.post("https://api.twitter.com/1.1/account/update_profile_image.json", headers=headers, data=body)
+            r.raise_for_status()
+        if name or bio:
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            body = "birthdate_day=0&birthdate_month=0&birthdate_year=0"
+            r = self._client.post("https://api.twitter.com/1.1/account/update_profile.json", headers=headers, data=body)
+            r.raise_for_status()
+
+            body = f"displayNameMaxLength=50&name={name}&description={bio}&location="
+            r = self._client.post("https://api.twitter.com/1.1/account/update_profile.json", headers=headers, data=body)
+            r.raise_for_status()
+
+            self.solve_captcha()
+
     def tweet(self, url: str, text: str):
-        json = {
+        body = {
             "variables": {
                 "tweet_text": text,
                 "reply": {
@@ -141,29 +200,32 @@ class Twitter:
             },
             "queryId": "SoVnbfCycZ7fERGCwpZkYA"
         }
-        self._client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", json=json).raise_for_status()
+        self._client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", json=body).raise_for_status()
 
     def retweet(self, url: str):
-        json = {
+        body = {
             "variables": {
                 "tweet_id": self._get_tweet_id(url),
                 "dark_request": False
             },
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
         }
-        self._client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", json=json).raise_for_status()
+        self._client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", json=body).raise_for_status()
 
     def like_tweet(self, url: str):
-        json = {
+        body = {
             "variables": {
                 "tweet_id": self._get_tweet_id(url)
             },
             "queryId": "lI07N6Otwv1PhnEgXILM7A"
         }
-        self._client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", json=json).raise_for_status()
+        self._client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", json=body).raise_for_status()
 
     def follow_user(self, username: str):
-        self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", params={"user_id": self._get_user_id(username)}).raise_for_status()
+        params = {
+            "user_id": self._get_user_id(username)
+        }
+        self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", params=params).raise_for_status()
 
     def get_tweet(self, url: str):
         params = {
