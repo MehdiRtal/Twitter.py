@@ -1,2 +1,4 @@
 httpx
 capsolver
+bs4
+fake-useragent
