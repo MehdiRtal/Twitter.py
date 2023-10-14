@@ -154,7 +154,7 @@ class Twitter:
                     "sign_up": {
                         "link": "email_next_link",
                         "name": name,
-                        "email": email.split(":")[0],
+                        "email": email,
                         "birthday": {
                             "day": random.randint(1, 28),
                             "month": random.randint(1, 12),
@@ -201,7 +201,7 @@ class Twitter:
                     "subtask_id": "EmailVerification",
                     "email_verification": {
                         "code": otp,
-                        "email": email.split(":")[0],
+                        "email": email,
                         "link": "next_link"
                     }
                 }
