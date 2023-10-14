@@ -232,7 +232,7 @@ class Twitter:
         print(r.text)
         print(r.cookies)
 
-    def login(self, username: str, password: str, auth_token: str):
+    def login(self, username: str = None, password: str = None, auth_token: str = None):
         if username and password:
             headers = {
                 "Authorization": "",
