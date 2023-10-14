@@ -141,11 +141,19 @@ class Twitter:
 
         otp = otp_handler()
         capsolver.api_key = self._capsolver_api_key
-        token = capsolver.solve({
-            "type": "FunCaptchaTaskProxyLess",
-            "websitePublicKey": "2CB16598-CB82-4CF7-B332-5990DB66F3AB",
-            "websiteURL": "https://twitter.com/i/flow/signup",
-        })["token"]
+        for _ in range(3):
+            try:
+                token = capsolver.solve({
+                    "type": "FunCaptchaTaskProxyLess",
+                    "websitePublicKey": "2CB16598-CB82-4CF7-B332-5990DB66F3AB",
+                    "websiteURL": "https://twitter.com/i/flow/signup",
+                })["token"]
+            except:
+                pass
+            else:
+                break
+        else:
+            raise Exception("Failed to solve captcha")
         body = {
             "flow_token": flow_token,
             "subtask_inputs": [
