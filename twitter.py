@@ -2,6 +2,7 @@ import httpx
 import json
 import re
 import secrets
+import random
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import urllib.parse
@@ -54,10 +55,7 @@ class Twitter:
     def _get_tweet_id(self, url: str):
         return re.search(r"\/status\/(\d+)", url).group(1)
 
-    def signup(self):
-        email = "trueheqhuo@hldrive.com"
-        password = "zarazrazraz@@131"
-
+    def signup(self, name: str, email: str, password: str, otp_handler: callable):
         headers = {
             "Authorization": "",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -132,17 +130,16 @@ class Twitter:
         r.raise_for_status()
         data = r.json()
         flow_token = data["flow_token"]
-        flow_token = flow_token[:-1]
 
         body = {
             "email": email,
-            "display_name": "Mehdi",
-            "flow_token": flow_token + "0"
+            "display_name": name,
+            "flow_token": flow_token
         }
         r = self._client.post("https://api.twitter.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
         r.raise_for_status()
 
-        otp = input("OTP: ")
+        otp = otp_handler()
         capsolver.api_key = self._capsolver_api_key
         token = capsolver.solve({
             "type": "FunCaptchaTaskProxyLess",
@@ -150,21 +147,18 @@ class Twitter:
             "websiteURL": "https://twitter.com/i/flow/signup",
         })["token"]
         body = {
-            "flow_token": flow_token + "0",
+            "flow_token": flow_token,
             "subtask_inputs": [
                 {
                     "subtask_id": "Signup",
                     "sign_up": {
-                        "js_instrumentation": {
-                            "response": "{\"rf\":{\"aec29a33abb6d501d849f8764f07a717f2a1af91b4016a54ddff27d61ad12904\":0,\"b284d610ea4a6c28fcf9d8f080dc620d47e95e0f52ef0e59474f6565fec72c16\":73,\"a795edb67b41a593988756fa347d1d8ea229b930fef131d1d485604b2b413f61\":-1,\"a9c47edacfa61fa4ea26d89720ca8f51da1a70192b4495bb773e06028025700e\":0},\"s\":\"GkcsR5JHI7K9v_BviYnQEZN89MfKyxK-RjMoYCrqqjbLZlrVqxe50K98KKIKjiTQxPN8I32yVs5sAiLDUYLpV-My7h8qa9azG1zYckUaga-f4jkuQdyDzBvgxNHH4aKMC9nsJ0w794xqBTHA5c-ocreDWYWuwUWSXchHdp9HtAdQzCVQY4JrucVggxZZVphm1HCbi7ylqyvXa4Tp0SfOBYsu1ZzAYvaSux2q_dteHW26uoWrjhlBdBJGzSoSovw4TMbTJRMo0MiFUhBWlKw2HMJdlt3eBxaPdbPBVySyAagWbEwjQOt6rYgeCnj9ukS7-i2xBbufkH8KbA_-SOW_qwAAAYsKCiZW\"}"
-                        },
                         "link": "email_next_link",
-                        "name": "Mehdi",
-                        "email": email,
+                        "name": name,
+                        "email": email.split(":")[0],
                         "birthday": {
-                            "day": 8,
-                            "month": 5,
-                            "year": 2003
+                            "day": random.randint(1, 28),
+                            "month": random.randint(1, 12),
+                            "year": random.randint(1950, 2000)
                         },
                         "personalization_settings": {
                             "allow_cookie_use": True,
@@ -207,7 +201,7 @@ class Twitter:
                     "subtask_id": "EmailVerification",
                     "email_verification": {
                         "code": otp,
-                        "email": email,
+                        "email": email.split(":")[0],
                         "link": "next_link"
                     }
                 }
@@ -215,9 +209,11 @@ class Twitter:
         }
         r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
         r.raise_for_status()
+        data = r.json()
+        flow_token = data["flow_token"]
 
         body = {
-            "flow_token": flow_token + "4",
+            "flow_token": flow_token,
             "subtask_inputs": [
                 {
                     "subtask_id": "EnterPassword",
@@ -229,8 +225,8 @@ class Twitter:
             ]
         }
         r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
-        print(r.text)
-        print(r.cookies)
+        r.raise_for_status()
+        self.auth_token = r.cookies["auth_token"]
 
     def login(self, username: str = None, password: str = None, auth_token: str = None):
         if username and password:
@@ -307,10 +303,9 @@ class Twitter:
             r.raise_for_status()
             data = r.json()
             flow_token = data["flow_token"]
-            flow_token = flow_token[:-1]
 
             body = {
-                "flow_token": flow_token + "0",
+                "flow_token": flow_token,
                 "subtask_inputs": [
                     {
                         "subtask_id": "LoginJsInstrumentationSubtask",
@@ -323,9 +318,11 @@ class Twitter:
             }
             r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
             r.raise_for_status()
+            data = r.json()
+            flow_token = data["flow_token"]
 
             body = {
-                "flow_token": flow_token + "1",
+                "flow_token": flow_token,
                 "subtask_inputs": [
                     {
                         "subtask_id": "LoginEnterUserIdentifierSSO",
@@ -347,9 +344,11 @@ class Twitter:
             }
             r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
             r.raise_for_status()
+            data = r.json()
+            flow_token = data["flow_token"]
 
             body = {
-                "flow_token": flow_token + "6",
+                "flow_token": flow_token,
                 "subtask_inputs": [
                     {
                         "subtask_id": "LoginEnterPassword",
@@ -362,9 +361,11 @@ class Twitter:
             }
             r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
             r.raise_for_status()
+            data = r.json()
+            flow_token = data["flow_token"]
 
             body = {
-                "flow_token": flow_token + "7",
+                "flow_token": flow_token,
                 "subtask_inputs": [
                     {
                         "subtask_id": "AccountDuplicationCheck",
@@ -619,3 +620,9 @@ class Twitter:
                                 tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
                                 break
         return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self._client.close()
