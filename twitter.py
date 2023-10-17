@@ -15,6 +15,7 @@ class Twitter:
         self._capsolver_api_key = capsolver_api_key
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         self.auth_token = None
+        self.username = None
         csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
         ua = UserAgent()
         self._client.headers.update({
@@ -26,7 +27,7 @@ class Twitter:
             "ct0": csrf_token
         })
 
-    def _get_user_id(self, username: str):
+    def get_user_id(self, username: str):
         params = {
             "variables": json.dumps({
                 "screen_name": username,
@@ -52,7 +53,7 @@ class Twitter:
         r.raise_for_status()
         return r.json()["data"]["user"]["result"]["rest_id"]
 
-    def _get_tweet_id(self, url: str):
+    def get_tweet_id(self, url: str):
         return re.search(r"\/status\/(\d+)", url).group(1)
 
     def signup(self, name: str, email: str, password: str, otp_handler: callable):
@@ -234,7 +235,9 @@ class Twitter:
         }
         r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
         r.raise_for_status()
+        data = r.json()
         self.auth_token = r.cookies["auth_token"]
+        self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
     def login(self, username: str = None, password: str = None, auth_token: str = None):
         if username and password:
@@ -507,7 +510,7 @@ class Twitter:
             "variables": {
                 "tweet_text": text,
                 "reply": {
-                    "in_reply_to_tweet_id": self._get_tweet_id(url),
+                    "in_reply_to_tweet_id": self.get_tweet_id(url),
                     "exclude_reply_user_ids": []
                 },
                 "dark_request": False,
@@ -544,32 +547,32 @@ class Twitter:
     def retweet(self, url: str):
         body = {
             "variables": {
-                "tweet_id": self._get_tweet_id(url),
+                "tweet_id": self.get_tweet_id(url),
                 "dark_request": False
             },
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
         }
         self._client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", json=body).raise_for_status()
 
-    def like_tweet(self, url: str):
+    def like(self, url: str):
         body = {
             "variables": {
-                "tweet_id": self._get_tweet_id(url)
+                "tweet_id": self.get_tweet_id(url)
             },
             "queryId": "lI07N6Otwv1PhnEgXILM7A"
         }
         self._client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", json=body).raise_for_status()
 
-    def follow_user(self, username: str):
+    def follow(self, username: str):
         params = {
-            "user_id": self._get_user_id(username)
+            "user_id": self.get_user_id(username)
         }
         self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", params=params).raise_for_status()
 
     def get_tweet(self, url: str):
         params = {
             "variables": json.dumps({
-                "focalTweetId": self._get_tweet_id(url),
+                "focalTweetId": self.get_tweet_id(url),
                 "with_rux_injections": False,
                 "includePromotedContent": True,
                 "withCommunity": True,
