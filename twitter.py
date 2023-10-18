@@ -1,14 +1,14 @@
 import httpx
 import json
 import re
-import secrets
 import random
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import urllib.parse
 import capsolver
 import hashlib
-import string
+
+from .utils import generate_csrf_token, generate_transaction_id
 
 
 class Twitter:
@@ -17,7 +17,7 @@ class Twitter:
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         self.auth_token = None
         self.username = None
-        csrf_token = "".join([hex(x)[-1] for x in secrets.token_bytes(32)])
+        csrf_token = generate_csrf_token()
         ua = UserAgent()
         self._client.headers.update({
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
@@ -27,9 +27,6 @@ class Twitter:
         self._client.cookies.update({
             "ct0": csrf_token
         })
-
-    def _generate_transaction_id(self):
-        return "".join(random.choice(string.ascii_letters + string.digits + "+/") for _ in range(93))
 
     def signup(self, name: str, email: str, password: str, otp_handler: callable):
         headers = {
@@ -55,7 +52,7 @@ class Twitter:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
-            "X-Client-Transaction-Id": self._generate_transaction_id(),
+            "X-Client-Transaction-Id": generate_transaction_id(),
             "X-Guest-Token": guest_token,
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Client-Language": "en",
@@ -251,7 +248,7 @@ class Twitter:
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
-                "X-Client-Transaction-Id": self._generate_transaction_id(),
+                "X-Client-Transaction-Id": generate_transaction_id(),
                 "X-Guest-Token": guest_token,
                 "X-Twitter-Active-User": "yes",
                 "X-Twitter-Client-Language": "en",
@@ -407,6 +404,7 @@ class Twitter:
             "Upgrade-Insecure-Requests": "1"
         }
         r = self._client.get("https://twitter.com/account/access", headers=headers, follow_redirects=True)
+        r.raise_for_status()
         if "access" in str(r.url):
             soup = BeautifulSoup(r.text, "html.parser")
             authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
@@ -443,6 +441,7 @@ class Twitter:
 
             body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
             r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
+            r.raise_for_status()
 
     def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
         if avatar:
@@ -513,7 +512,7 @@ class Twitter:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": self._generate_transaction_id(),
+            "X-Client-Transaction-Id": generate_transaction_id(),
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
@@ -558,7 +557,7 @@ class Twitter:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": self._generate_transaction_id(),
+            "X-Client-Transaction-Id": generate_transaction_id(),
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
@@ -610,7 +609,7 @@ class Twitter:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": self._generate_transaction_id(),
+            "X-Client-Transaction-Id": generate_transaction_id(),
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
@@ -633,7 +632,7 @@ class Twitter:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": self._generate_transaction_id(),
+            "X-Client-Transaction-Id": generate_transaction_id(),
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
@@ -655,7 +654,7 @@ class Twitter:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": self._generate_transaction_id(),
+            "X-Client-Transaction-Id": generate_transaction_id(),
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
@@ -674,7 +673,7 @@ class Twitter:
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": self._generate_transaction_id(),
+            "X-Client-Transaction-Id": generate_transaction_id(),
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
@@ -717,6 +716,7 @@ class Twitter:
             })
         }
         r = self._client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", headers=headers, params=params)
+        r.raise_for_status()
         data = r.json()
         if r.status_code != 200 or "errors" in data:
             raise Exception(data["errors"][0]["message"])
