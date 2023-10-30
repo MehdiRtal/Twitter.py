@@ -133,7 +133,7 @@ class Twitter:
                     "websitePublicKey": "2CB16598-CB82-4CF7-B332-5990DB66F3AB",
                     "websiteURL": "https://twitter.com/i/flow/signup",
                 })["token"]
-            except:
+            except Exception:
                 pass
             else:
                 break
@@ -442,6 +442,29 @@ class Twitter:
             body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
             r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
             r.raise_for_status()
+
+    def change_password(self, current_password: str, password: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://twitter.com/settings/password",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        body = {
+            "current_password": current_password,
+            "password": password,
+            "password_confirmation": password
+        }
+        r = self._client.post("https://twitter.com/i/api/i/account/change_password.json", headers=headers, data=body)
+        r.raise_for_status()
+        self.auth_token = r.cookies["auth_token"]
 
     def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
         if avatar:
