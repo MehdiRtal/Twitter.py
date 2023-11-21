@@ -4,8 +4,6 @@ import re
 import random
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
-import urllib.parse
-import capsolver
 import hashlib
 
 from .utils import generate_csrf_token, generate_transaction_id
@@ -125,14 +123,9 @@ class Twitter:
         r.raise_for_status()
 
         otp = otp_handler()
-        capsolver.api_key = self._capsolver_api_key
         for _ in range(3):
             try:
-                token = capsolver.solve({
-                    "type": "FunCaptchaTaskProxyLess",
-                    "websitePublicKey": "2CB16598-CB82-4CF7-B332-5990DB66F3AB",
-                    "websiteURL": "https://twitter.com/i/flow/signup",
-                })["token"]
+                token = self._captcha_handler(public_key="2CB16598-CB82-4CF7-B332-5990DB66F3AB", url="https://twitter.com/i/flow/signup")
             except Exception:
                 pass
             else:
@@ -412,11 +405,15 @@ class Twitter:
 
             headers.update({
                 "Referer": "https://twitter.com/account/access",
-                "Content-Type": "application/x-www-form-urlencoded"
             })
 
             if not soup.find("form", {"id": "arkose_form"}):
-                body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
+                body = {
+                    "authenticity_token": authenticity_token,
+                    "assignment_token": assignment_token,
+                    "lang": "en",
+                    "flow": ""
+                }
                 r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
                 soup = BeautifulSoup(r.text, "html.parser")
                 authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
@@ -424,8 +421,15 @@ class Twitter:
 
             for _ in range(3):
                 token = self._captcha_handler(public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
-                body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow=&verification_string={urllib.parse.quote(token)}&language_code=en"
-                r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
+                body = {
+                    "authenticity_token": authenticity_token,
+                    "assignment_token": assignment_token,
+                    "lang": "en",
+                    "flow": "",
+                    "verification_string": token,
+                    "language_code": "en"
+                }
+                r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
                 soup = BeautifulSoup(r.text, "html.parser")
                 if not soup.find("form", {"id": "arkose_form"}):
                     break
@@ -434,9 +438,15 @@ class Twitter:
             else:
                 raise Exception("Failed to solve captcha")
 
-            body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow="
-            r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
-            r.raise_for_status()
+            body = {
+                "authenticity_token": authenticity_token,
+                "assignment_token": assignment_token,
+                "lang": "en",
+                "flow": ""
+            }
+            r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
+            if r.status_code != 302:
+                r.raise_for_status()
 
     def change_password(self, current_password: str, password: str):
         headers = {
