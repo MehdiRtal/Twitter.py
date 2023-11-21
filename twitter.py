@@ -12,8 +12,8 @@ from .utils import generate_csrf_token, generate_transaction_id
 
 
 class Twitter:
-    def __init__(self, proxy: str = None, capsolver_api_key: str = None):
-        self._capsolver_api_key = capsolver_api_key
+    def __init__(self, proxy: str = None, captcha_handler: callable = None):
+        self._captcha_handler = captcha_handler
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
         self.auth_token = None
         self.username = None
@@ -391,7 +391,7 @@ class Twitter:
                 "auth_token": self.auth_token
             })
 
-    def solve_captcha(self, token_handler: callable):
+    def solve_captcha(self):
         headers = {
             "Authorization": "",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -423,13 +423,7 @@ class Twitter:
                 assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
             for _ in range(3):
-                token = token_handler(public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
-                # capsolver.api_key = self._capsolver_api_key
-                # token = capsolver.solve({
-                #     "type": "FunCaptchaTaskProxyLess",
-                #     "websitePublicKey": "0152B4EB-D2DC-460A-89A1-629838B529C9",
-                #     "websiteURL": "https://twitter.com/account/access",
-                # })["token"]
+                token = self._captcha_handler(public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
                 body = f"authenticity_token={authenticity_token}&assignment_token={assignment_token}&lang=en&flow=&verification_string={urllib.parse.quote(token)}&language_code=en"
                 r = self._client.post("https://twitter.com/account/access?lang=en", headers=headers, data=body)
                 soup = BeautifulSoup(r.text, "html.parser")
