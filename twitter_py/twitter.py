@@ -13,7 +13,7 @@ from twitter_py.utils import generate_csrf_token, generate_transaction_id
 class Twitter:
     def __init__(self, proxy: str = None, captcha_handler: callable = None):
         self._captcha_handler = captcha_handler
-        self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None)
+        self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None, timeout=httpx.Timeout(5, read=10))
         self.auth_token = None
         self.username = None
         csrf_token = generate_csrf_token()
@@ -697,6 +697,29 @@ class Twitter:
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
         }
         self._client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", headers=headers, json=body).raise_for_status()
+
+    def delete_tweet(self, tweet_id: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://twitter.com/home",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        body = {
+            "variables": {
+                "tweet_id": tweet_id,
+                "dark_request": False
+            },
+            "queryId": "VaenaVgh5q5ih7kvyVjgtg"
+        }
+        self._client.post("https://twitter.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", headers=headers, json=body).raise_for_status()
 
     def delete_retweet(self, tweet_id: str):
         headers = {

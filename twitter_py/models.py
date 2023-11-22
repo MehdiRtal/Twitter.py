@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, AliasPath
+from pydantic import BaseModel, Field, AliasPath, AliasChoices
 
 
 class User(BaseModel):
@@ -9,8 +9,5 @@ class User(BaseModel):
     following_count: int = Field(validation_alias=AliasPath("legacy", "friends_count"))
 
 class Tweet(BaseModel):
-    id: str = Field(None, validation_alias=AliasPath("content", "itemContent", "tweet_results", "result", "rest_id"))
-    views_count: str = Field(None, validation_alias=AliasPath("content", "itemContent", "tweet_results", "result", "views", "count"))
-    retweets_count: int = Field(None, validation_alias=AliasPath("content", "itemContent", "tweet_results", "result", "legacy", "retweet_count"))
-    likes_count: int = Field(None, validation_alias=AliasPath("content", "itemContent", "tweet_results", "result", "legacy", "favorite_count"))
-    replies_count: int = Field(None, validation_alias=AliasPath("content", "itemContent", "tweet_results", "result", "legacy", "reply_count"))
+    id: str = Field(None, validation_alias=AliasChoices(AliasPath("content", "itemContent", "tweet_results", "result", "rest_id"), AliasPath("content", "itemContent", "tweet_results", "result", "tweet", "rest_id")))
+    retweet_id: str = Field(None, validation_alias=AliasChoices(AliasPath("content", "itemContent", "tweet_results", "result", "legacy", "retweeted_status_result", "result", "rest_id"), AliasPath("content", "itemContent", "tweet_results", "result", "tweet", "legacy", "retweeted_status_result", "result", "rest_id")))
