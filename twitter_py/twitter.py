@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import hashlib
 
+from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token, generate_transaction_id
 
 
@@ -531,6 +532,47 @@ class Twitter:
 
             self.solve_captcha()
 
+    def like(self, tweet_id: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://twitter.com/home",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        body = {
+            "variables": {
+                "tweet_id": tweet_id
+            },
+            "queryId": "lI07N6Otwv1PhnEgXILM7A"
+        }
+        self._client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body).raise_for_status()
+
+    def follow(self, username: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": f"https://twitter.com/{username}",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        params = {
+            "user_id": self.get_user_info(username).id
+        }
+        self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", headers=headers, params=params).raise_for_status()
+
     def tweet(self, text: str):
         headers = {
             "Accept": "*/*",
@@ -581,7 +623,7 @@ class Twitter:
         }
         self._client.post("https://twitter.com/i/api/graphql/5V_dkq1jfalfiFOEZ4g47A/CreateTweet", headers=headers, json=body).raise_for_status()
 
-    def reply(self, url: str, text: str):
+    def reply(self, tweet_id: str, text: str):
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
@@ -599,7 +641,7 @@ class Twitter:
             "variables": {
                 "tweet_text": text,
                 "reply": {
-                    "in_reply_to_tweet_id": self.get_tweet_id(url),
+                    "in_reply_to_tweet_id": tweet_id,
                     "exclude_reply_user_ids": []
                 },
                 "dark_request": False,
@@ -633,7 +675,7 @@ class Twitter:
         }
         self._client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", headers=headers, json=body).raise_for_status()
 
-    def retweet(self, url: str):
+    def retweet(self, tweet_id: str):
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
@@ -649,14 +691,14 @@ class Twitter:
         }
         body = {
             "variables": {
-                "tweet_id": self.get_tweet_id(url),
+                "tweet_id": tweet_id,
                 "dark_request": False
             },
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
         }
         self._client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", headers=headers, json=body).raise_for_status()
 
-    def like(self, url: str):
+    def delete_retweet(self, tweet_id: str):
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
@@ -672,38 +714,17 @@ class Twitter:
         }
         body = {
             "variables": {
-                "tweet_id": self.get_tweet_id(url)
+                "source_tweet_id": tweet_id,
+                "dark_request": False
             },
-            "queryId": "lI07N6Otwv1PhnEgXILM7A"
+            "queryId": "iQtK4dl5hBmXewYZuEOKVw"
         }
-        self._client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body).raise_for_status()
-
-    def follow(self, username: str):
-        headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Referer": f"https://twitter.com/{username}",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": generate_transaction_id(),
-            "X-Twitter-Active-User": "yes",
-            "X-Twitter-Auth-Type": "OAuth2Session",
-            "X-Twitter-Client-Language": "en"
-        }
-        params = {
-            "user_id": self.get_user_id(username)
-        }
-        self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", headers=headers, params=params).raise_for_status()
-
-    def get_user_id(self, username: str):
-        return self.get_user_info(username)["rest_id"]
+        self._client.post("https://twitter.com/i/api/graphql/iQtK4dl5hBmXewYZuEOKVw/DeleteRetweet", headers=headers, json=body).raise_for_status()
 
     def get_tweet_id(self, url: str):
         return re.search(r"\/status\/(\d+)", url).group(1)
 
-    def get_user_info(self, username: str):
+    def get_user_info(self, username: str) -> User:
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
@@ -740,9 +761,9 @@ class Twitter:
         }
         r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
         r.raise_for_status()
-        return r.json()["data"]["user"]["result"]
+        return User(**r.json()["data"]["user"]["result"])
 
-    def get_user_tweets(self, username: str):
+    def get_user_tweets(self, username: str) -> list[Tweet]:
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
@@ -758,7 +779,7 @@ class Twitter:
         }
         params = {
             "variables": json.dumps({
-                "userId": self.get_user_id(username),
+                "userId": self.get_user_info(username).id,
                 "count": 20,
                 "includePromotedContent": True,
                 "withQuickPromoteEligibilityTweetFields": True,
@@ -789,11 +810,11 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             })
         }
-        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
+        r = self._client.get("https://twitter.com/i/api/graphql/VgitpdpNZ-RUIp5D1Z_D-A/UserTweets", headers=headers, params=params)
         r.raise_for_status()
-        return r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"][1]["entries"]
+        return [Tweet(**tweet) for tweet in r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"][1]["entries"]]
 
-    def get_tweet_info(self, url: str):
+    def get_tweet_info(self, url: str) -> Tweet:
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
@@ -846,7 +867,7 @@ class Twitter:
         }
         r = self._client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", headers=headers, params=params)
         r.raise_for_status()
-        return r.json()["data"]["threaded_conversation_with_injections_v2"]["instructions"][0]["entries"]
+        return Tweet(**r.json()["data"]["threaded_conversation_with_injections_v2"]["instructions"][0]["entries"][0])
 
     def __enter__(self):
         return self
