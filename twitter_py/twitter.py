@@ -370,7 +370,7 @@ class Twitter:
                     {
                         "subtask_id": "AccountDuplicationCheck",
                         "check_logged_in_account": {
-                            "link": "AccountDuplicationCheck_false"
+                            "link": "AccountDuplicationCheck_ False"
                         }
                     }
                 ]
@@ -513,7 +513,7 @@ class Twitter:
             headers = {
                 "Content-Type": "application/x-www-form-urlencoded"
             }
-            body = f"include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&include_can_media_tag=1&include_ext_has_nft_avatar=1&include_ext_is_blue_verified=1&include_ext_verified_type=1&include_ext_profile_image_shape=1&skip_status=1&return_user=true&media_id={media_id}"
+            body = f"include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&include_can_media_tag=1&include_ext_has_nft_avatar=1&include_ext_is_blue_verified=1&include_ext_verified_type=1&include_ext_profile_image_shape=1&skip_status=1&return_user= True&media_id={media_id}"
             r = self._client.post("https://api.twitter.com/1.1/account/update_profile_image.json", headers=headers, data=body)
             r.raise_for_status()
 
@@ -530,51 +530,6 @@ class Twitter:
             r.raise_for_status()
 
             self.solve_captcha()
-
-    def get_user_info(self, username: str):
-        headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Referer": f"https://twitter.com/{username}",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "X-Client-Transaction-Id": generate_transaction_id(),
-            "X-Twitter-Active-User": "yes",
-            "X-Twitter-Auth-Type": "OAuth2Session",
-            "X-Twitter-Client-Language": "en"
-        }
-        params = {
-            "variables": json.dumps({
-                "screen_name": username,
-                "withSafetyModeUserFields": True
-            }),
-            "features": json.dumps({
-                "hidden_profile_likes_enabled": False,
-                "hidden_profile_subscriptions_enabled": True,
-                "responsive_web_graphql_exclude_directive_enabled": True,
-                "verified_phone_label_enabled": False,
-                "subscriptions_verification_info_is_identity_verified_enabled": False,
-                "subscriptions_verification_info_verified_since_enabled": True,
-                "highlights_tweets_tab_ui_enabled": True,
-                "creator_subscriptions_tweet_preview_api_enabled": True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-                "responsive_web_graphql_timeline_navigation_enabled": True
-            }),
-            "fieldToggles": json.dumps({
-                "withAuxiliaryUserLabels": False
-            }),
-        }
-        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
-        r.raise_for_status()
-        return r.json()["data"]["user"]["result"]
-
-    def get_user_id(self, username: str):
-        return self.get_user_info(username)["rest_id"]
-
-    def get_tweet_id(self, url: str):
-        return re.search(r"\/status\/(\d+)", url).group(1)
 
     def tweet(self, text: str):
         headers = {
@@ -742,6 +697,102 @@ class Twitter:
         }
         self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", headers=headers, params=params).raise_for_status()
 
+    def get_user_id(self, username: str):
+        return self.get_user_info(username)["rest_id"]
+
+    def get_tweet_id(self, url: str):
+        return re.search(r"\/status\/(\d+)", url).group(1)
+
+    def get_user_info(self, username: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": f"https://twitter.com/{username}",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        params = {
+            "variables": json.dumps({
+                "screen_name": username,
+                "withSafetyModeUserFields": True
+            }),
+            "features": json.dumps({
+                "hidden_profile_likes_enabled": False,
+                "hidden_profile_subscriptions_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "subscriptions_verification_info_is_identity_verified_enabled": False,
+                "subscriptions_verification_info_verified_since_enabled": True,
+                "highlights_tweets_tab_ui_enabled": True,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "responsive_web_graphql_timeline_navigation_enabled": True
+            }),
+            "fieldToggles": json.dumps({
+                "withAuxiliaryUserLabels": False
+            }),
+        }
+        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
+        r.raise_for_status()
+        return r.json()["data"]["user"]["result"]
+
+    def get_user_tweets(self, username: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": f"https://twitter.com/{username}",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        params = {
+            "variables": json.dumps({
+                "userId": self.get_user_id(username),
+                "count": 20,
+                "includePromotedContent": True,
+                "withQuickPromoteEligibilityTweetFields": True,
+                "withVoice": True,
+                "withV2Timeline": True
+            }),
+            "features": json.dumps({
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "responsive_web_home_pinned_timelines_enabled": True,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": False,
+                "tweet_awards_web_tipping_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "responsive_web_media_download_video_enabled": False,
+                "responsive_web_enhance_cards_enabled": False
+            })
+        }
+        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
+        r.raise_for_status()
+        return r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"][1]["entries"]
+
     def get_tweet_info(self, url: str):
         headers = {
             "Accept": "*/*",
@@ -795,29 +846,7 @@ class Twitter:
         }
         r = self._client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", headers=headers, params=params)
         r.raise_for_status()
-        data = r.json()
-        if r.status_code != 200 or "errors" in data:
-            raise Exception(data["errors"][0]["message"])
-        entries = data["data"]["threaded_conversation_with_injections_v2"]["instructions"][0]["entries"]
-        tweets = []
-        for entry in entries:
-            if "tweet" in entry["entryId"]:
-                try:
-                    try:
-                        data_legacy = entry["content"]["itemContent"]["tweet_results"]["result"]["legacy"]
-                    except KeyError:
-                        data_legacy = entry["content"]["itemContent"]["tweet_results"]["result"]["tweet"]["legacy"]
-                except KeyError:
-                    continue
-                for tweet in data_legacy["extended_entities"]["media"]:
-                    if tweet["type"] == "photo":
-                        tweets.append({"Type": "image", "media": tweet["media_url_https"], "thumbnail": tweet["media_url_https"]})
-                    elif tweet["type"] == "video" or tweet["type"] == "animated_gif":
-                        for video in sorted(tweet["video_info"]["variants"], key=lambda x: x.get("bitrate", 0), reverse=True):
-                            if video["content_type"] == "video/mp4":
-                                tweets.append({"Type": "video", "media": video["url"], "thumbnail": tweet["media_url_https"]})
-                                break
-        return {"media": tweets, "possibly_sensitive": data_legacy["possibly_sensitive"]}
+        return r.json()["data"]["threaded_conversation_with_injections_v2"]["instructions"][0]["entries"]
 
     def __enter__(self):
         return self
