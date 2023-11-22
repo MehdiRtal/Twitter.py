@@ -3,7 +3,6 @@ name = "twitter-py"
 version = "0.1.0"
 description = ""
 authors = ["MehdiRtal <mehdirtal7@pm.me>"]
-readme = "README.md"
 packages = [{include = "twitter_py"}]
 
 [tool.poetry.dependencies]
