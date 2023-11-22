@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import hashlib
 
-from .utils import generate_csrf_token, generate_transaction_id
+from twitter_py.utils import generate_csrf_token, generate_transaction_id
 
 
 class Twitter:
