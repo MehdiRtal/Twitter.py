@@ -385,6 +385,21 @@ class Twitter:
                 "auth_token": self.auth_token
             })
 
+            headers = {
+                "Authorization": "",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Encoding": "gzip, deflate",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
+            r = self._client.get("https://twitter.com/home", headers=headers, follow_redirects=True)
+            if "login" in str(r.url):
+                raise Exception("Invalid auth token")
+
     def solve_captcha(self):
         headers = {
             "Authorization": "",
@@ -409,18 +424,6 @@ class Twitter:
                 "Referer": "https://twitter.com/account/access",
             })
 
-            # if not soup.find("form", {"id": "arkose_form"}):
-            #     body = {
-            #         "authenticity_token": authenticity_token,
-            #         "assignment_token": assignment_token,
-            #         "lang": "en",
-            #         "flow": ""
-            #     }
-            #     r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
-            #     soup = BeautifulSoup(r.text, "html.parser")
-            #     authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
-            #     assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
-
             for _ in range(3):
                 token = self._captcha_handler(public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
                 body = {
@@ -439,16 +442,6 @@ class Twitter:
                 assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
             else:
                 raise Exception("Failed to solve captcha")
-
-            # body = {
-            #     "authenticity_token": authenticity_token,
-            #     "assignment_token": assignment_token,
-            #     "lang": "en",
-            #     "flow": ""
-            # }
-            # r = self._client.post("https://twitter.com/account/access", headers=headers, data=body)
-            # if r.status_code != 302:
-            #     r.raise_for_status()
 
     def change_password(self, current_password: str, password: str):
         headers = {
