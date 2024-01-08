@@ -14,7 +14,7 @@ class Twitter:
     def __init__(self, proxy: str = None, captcha_handler: callable = None):
         self._captcha_handler = captcha_handler
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None, timeout=httpx.Timeout(5, read=10))
-        self.auth_token = None
+        self.session = None
         self.username = None
         csrf_token = generate_csrf_token()
         ua = UserAgent()
