@@ -214,7 +214,7 @@ class Twitter:
         r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
         r.raise_for_status()
         data = r.json()
-        self.auth_token = r.cookies["auth_token"]
+        self.session = r.cookies["auth_token"]
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
     def login(self, username: str = None, password: str = None, email: str = None, auth_token: str = None):
@@ -401,7 +401,7 @@ class Twitter:
         elif auth_token:
             self.auth_token = auth_token
             self._client.cookies.update({
-                "auth_token": self.auth_token
+                "auth_token": self.session
             })
 
             headers = {
