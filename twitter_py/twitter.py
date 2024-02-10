@@ -217,7 +217,7 @@ class Twitter:
         self.auth_token = r.cookies["auth_token"]
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
-    def login(self, username: str = None, password: str = None, auth_token: str = None):
+    def login(self, username: str = None, password: str = None, email: str = None, auth_token: str = None):
         if username and password:
             headers = {
                 "Authorization": "",
@@ -378,6 +378,25 @@ class Twitter:
             }
             r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
             r.raise_for_status()
+            r_json = r.json()
+
+            if r_json["subtasks"]:
+                flow_token = data["flow_token"]
+                body = {
+                    "flow_token": flow_token,
+                    "subtask_inputs": [
+                        {
+                            "subtask_id": "LoginAcid",
+                            "enter_text": {
+                                "link": "next_link",
+                                "text": email
+                            }
+                        }
+                    ]
+                }
+                r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+                r.raise_for_status()
+
             self.auth_token = r.cookies["auth_token"]
         elif auth_token:
             self.auth_token = auth_token
