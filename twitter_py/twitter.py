@@ -411,11 +411,11 @@ class Twitter:
                 "Accept-Language": "en-US,en;q=0.9",
                 "Sec-Fetch-Dest": "document",
                 "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-Site": "same-origin",
                 "Sec-Fetch-User": "?1",
                 "Upgrade-Insecure-Requests": "1"
             }
-            r = self._client.get("https://twitter.com/home", headers=headers, follow_redirects=True)
+            r = self._client.get("https://twitter.com/account/access", headers=headers, follow_redirects=True)
             if "login" in str(r.url):
                 raise Exception("Invalid auth token")
 
