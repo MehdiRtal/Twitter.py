@@ -378,9 +378,9 @@ class Twitter:
             }
             r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
             r.raise_for_status()
-            r_json = r.json()
+            data = r.json()
 
-            if r_json["subtasks"][0]["subtask_id"] == "LoginAcid":
+            if data["subtasks"][0]["subtask_id"] == "LoginAcid":
                 flow_token = data["flow_token"]
                 body = {
                     "flow_token": flow_token,
