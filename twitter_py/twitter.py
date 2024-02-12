@@ -217,7 +217,7 @@ class Twitter:
         self.session = r.cookies["auth_token"]
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
-    def login(self, username: str = None, password: str = None, email: str = None, auth_token: str = None):
+    def login(self, username: str = None, password: str = None, email: str = None, session: str = None):
         if username and password:
             headers = {
                 "Authorization": "",
@@ -380,7 +380,7 @@ class Twitter:
             r.raise_for_status()
             r_json = r.json()
 
-            if r_json["subtasks"]:
+            if r_json["subtasks"][0]["subtask_id"] == "LoginAcid":
                 flow_token = data["flow_token"]
                 body = {
                     "flow_token": flow_token,
@@ -397,9 +397,9 @@ class Twitter:
                 r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
                 r.raise_for_status()
 
-            self.auth_token = r.cookies["auth_token"]
-        elif auth_token:
-            self.auth_token = auth_token
+            self.session = r.cookies["auth_token"]
+        elif session:
+            self.session = session
             self._client.cookies.update({
                 "auth_token": self.session
             })
@@ -483,7 +483,7 @@ class Twitter:
         }
         r = self._client.post("https://twitter.com/i/api/i/account/change_password.json", headers=headers, data=body)
         r.raise_for_status()
-        self.auth_token = r.cookies["auth_token"]
+        self.session = r.cookies["auth_token"]
 
     def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
         if avatar:
