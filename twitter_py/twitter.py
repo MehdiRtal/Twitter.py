@@ -5,6 +5,7 @@ import random
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import hashlib
+import time
 
 from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token, generate_transaction_id
@@ -711,6 +712,96 @@ class Twitter:
         }
         self._client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", headers=headers, json=body).raise_for_status()
 
+    def bookmark(self, tweet_id: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://twitter.com/home",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        body = {
+            "variables": {
+                "tweet_id": tweet_id,
+            },
+            "queryId": "aoDbu3RHznuiSkQ9aNM67Q"
+        }
+        self._client.post("https://twitter.com/i/api/graphql/aoDbu3RHznuiSkQ9aNM67Q/CreateBookmark", headers=headers, json=body).raise_for_status()
+
+    def watch_space(self, id: str, sleep_m: int):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://twitter.com/home",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        r = self._client.get("https://twitter.com/i/api/1.1/oauth/authenticate_periscope.json", headers=headers)
+        r.raise_for_status()
+        r_json = r.json()
+        token = r_json["token"]
+
+        body = {
+            "jwt": token,
+            "vendor_id": "m5-proxsee-login-a2011357b73e",
+            "create_user": False,
+            "direct": True
+        }
+        r = self._client.post("https://proxsee.pscp.tv/api/v2/loginTwitterToken", headers=headers, json=body)
+        r.raise_for_status()
+        r_json = r.json()
+        cookie = r_json["cookie"]
+
+        media_key = self.get_space_info(id)["metadata"]["media_key"]
+
+        r = self._client.get(f"https://twitter.com/i/api/1.1/live_video_stream/status/{media_key}?client=web&use_syndication_guest_id=false&cookie_set_host=twitter.com", headers=headers)
+        r.raise_for_status()
+        r_json = r.json()
+        chat_token = r_json["chatToken"]
+        life_cycle_token = r_json["lifecycleToken"]
+
+        body = {
+            "chat_token": chat_token,
+            "cookie": cookie
+        }
+        self._client.post("https://proxsee.pscp.tv/api/v2/twitter/accessChat", headers=headers, json=body).raise_for_status()
+
+        body = {
+            "cookie": cookie,
+            "service": "guest"
+        }
+        r = self._client.post("https://proxsee.pscp.tv/api/v2/twitter/authorizeToken", headers=headers, json=body).raise_for_status()
+
+        body = {
+            "auto_play": False,
+            "cookie": cookie,
+            "life_cycle_token": life_cycle_token
+        }
+        r = self._client.post("https://proxsee.pscp.tv/api/v2/twitter/startWatching", headers=headers, json=body)
+        r.raise_for_status()
+        r_json = r.json()
+        session = r_json["session"]
+
+        for _ in range(sleep_m * 2):
+            body = {
+                "cookie": cookie,
+                "session": session
+            }
+            self._client.post("https://proxsee.pscp.tv/api/v2/twitter/pingWatching", headers=headers, json=body).raise_for_status()
+            time.sleep(30)
+
     def delete_tweet(self, tweet_id: str):
         headers = {
             "Accept": "*/*",
@@ -759,6 +850,59 @@ class Twitter:
 
     def get_tweet_id(self, url: str):
         return re.search(r"\/status\/(\d+)", url).group(1)
+
+    def get_space_id(self, url: str):
+        return re.search(r"\/spaces\/([A-Za-z0-9]+)", url).group(1)
+
+    def get_space_info(self, id: str):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": f"https://twitter.com/i/spaces/{id}",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en"
+        }
+        params = {
+            "variables": json.dumps({
+                "id": id,
+                "isMetatagsQuery": True,
+                "withReplays": True,
+                "withListeners": True
+            }),
+            "features": json.dumps({
+                "spaces_2022_h2_spaces_communities": True,
+                "spaces_2022_h2_clipping": True,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": True,
+                "tweet_awards_web_tipping_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "rweb_video_timestamps_enabled": True,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_enhance_cards_enabled": False
+            }),
+        }
+        r = self._client.get("https://twitter.com/i/api/graphql/MZwo_AA10ZpJfbY4ZekqQA/AudioSpaceById", headers=headers, params=params)
+        r.raise_for_status()
+        return r.json()["data"]["audioSpace"]
 
     def get_user_info(self, username: str) -> User:
         headers = {
