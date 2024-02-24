@@ -568,12 +568,12 @@ class Twitter:
         }
         self._client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body).raise_for_status()
 
-    def follow(self, username: str):
+    def follow(self, user: User):
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
-            "Referer": f"https://twitter.com/{username}",
+            "Referer": f"https://twitter.com/{user.username}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -583,7 +583,7 @@ class Twitter:
             "X-Twitter-Client-Language": "en"
         }
         params = {
-            "user_id": self.get_user_info(username).id
+            "user_id": user.id
         }
         self._client.post("https://twitter.com/i/api/1.1/friendships/create.json", headers=headers, params=params).raise_for_status()
 
@@ -943,12 +943,12 @@ class Twitter:
         r.raise_for_status()
         return User(**r.json()["data"]["user"]["result"])
 
-    def get_user_tweets(self, username: str) -> list[Tweet]:
+    def get_user_tweets(self, user: User) -> list[Tweet]:
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
-            "Referer": f"https://twitter.com/{username}",
+            "Referer": f"https://twitter.com/{user.username}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -959,7 +959,7 @@ class Twitter:
         }
         params = {
             "variables": json.dumps({
-                "userId": self.get_user_info(username).id,
+                "userId": user.id,
                 "count": 20,
                 "includePromotedContent": True,
                 "withQuickPromoteEligibilityTweetFields": True,
