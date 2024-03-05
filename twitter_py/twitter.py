@@ -486,6 +486,136 @@ class Twitter:
         r.raise_for_status()
         self.session = r.cookies["auth_token"]
 
+    def change_email(self, current_password: str, email: str, otp_handler: callable):
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://twitter.com/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Twitter-Active-User": "yes",
+            "X-Twitter-Auth-Type": "OAuth2Session",
+            "X-Twitter-Client-Language": "en",
+        }
+        body = {
+            "input_flow_data": {
+                "flow_context": {
+                    "debug_overrides": {},
+                    "start_location": {
+                        "location": "settings"
+                    }
+                }
+            },
+            "subtask_versions": {
+                "action_list": 2,
+                "alert_dialog": 1,
+                "app_download_cta": 1,
+                "check_logged_in_account": 1,
+                "choice_selection": 3,
+                "contacts_live_sync_permission_prompt": 0,
+                "cta": 7,
+                "email_verification": 2,
+                "end_flow": 1,
+                "enter_date": 1,
+                "enter_email": 2,
+                "enter_password": 5,
+                "enter_phone": 2,
+                "enter_recaptcha": 1,
+                "enter_text": 5,
+                "enter_username": 2,
+                "generic_urt": 3,
+                "in_app_notification": 1,
+                "interest_picker": 3,
+                "js_instrumentation": 1,
+                "menu_dialog": 1,
+                "notifications_permission_prompt": 2,
+                "open_account": 2,
+                "open_home_timeline": 1,
+                "open_link": 1,
+                "phone_verification": 4,
+                "privacy_options": 1,
+                "security_key": 3,
+                "select_avatar": 4,
+                "select_banner": 2,
+                "settings_list": 7,
+                "show_code": 1,
+                "sign_up": 2,
+                "sign_up_review": 4,
+                "tweet_selection_urt": 1,
+                "update_users": 1,
+                "upload_media": 1,
+                "user_recommendations_list": 4,
+                "user_recommendations_urt": 1,
+                "wait_spinner": 3,
+                "web_modal": 1
+            }
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json?flow_name=add_email", headers=headers, json=body)
+        r.raise_for_status()
+        data = r.json()
+        flow_token = data["flow_token"]
+
+        body = {
+            "flow_token": flow_token,
+            "subtask_inputs": [
+                {
+                    "subtask_id": "DeviceAssocEnterPassword",
+                    "enter_password": {
+                        "password": current_password,
+                        "link": "next_link"
+                    }
+                }
+            ]
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+        r.raise_for_status()
+        data = r.json()
+        flow_token = data["flow_token"]
+
+        body = {
+            "email": email,
+            "flow_token": flow_token
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
+        r.raise_for_status()
+
+        otp = otp_handler()
+        body = {
+            "flow_token": flow_token,
+            "subtask_inputs": [
+                {
+                    "subtask_id": "EmailAssocEnterEmail",
+                    "enter_email": {
+                        "setting_responses": [
+                            {
+                                "key": "email_discoverability_setting",
+                                "response_data": {
+                                    "boolean_data": {
+                                        "result": False
+                                    }
+                                }
+                            }
+                        ],
+                        "email": email,
+                        "link": "next_link"
+                    }
+                },
+                {
+                    "subtask_id": "EmailAssocVerifyEmail",
+                    "email_verification": {
+                        "code": otp,
+                        "email": email,
+                        "link": "next_link"
+                    }
+                }
+            ]
+        }
+        r = self._client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+        r.raise_for_status()
+
     def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
         if avatar:
             params = {
