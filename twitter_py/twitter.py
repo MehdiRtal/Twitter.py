@@ -14,15 +14,18 @@ from twitter_py.utils import generate_csrf_token, generate_transaction_id
 class Twitter:
     def __init__(self, proxy: str = None, captcha_handler: callable = None):
         self._captcha_handler = captcha_handler
-        self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None, timeout=httpx.Timeout(5, read=10))
+        self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None, timeout=httpx.Timeout(10, read=30))
         self.session = None
         self.username = None
         csrf_token = generate_csrf_token()
         ua = UserAgent()
+        user_agent = ua.chrome
+        if user_agent.endswith(" "):
+            user_agent = user_agent[:-1]
         self._client.headers.update({
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
             "X-Csrf-Token": csrf_token,
-            "User-Agent": ua.chrome,
+            "User-Agent": user_agent,
         })
         self._client.cookies.update({
             "ct0": csrf_token
@@ -31,8 +34,6 @@ class Twitter:
     def signup(self, name: str, email: str, password: str, otp_handler: callable):
         headers = {
             "Authorization": "",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/",
             "Sec-Fetch-Dest": "document",
@@ -46,8 +47,6 @@ class Twitter:
         guest_token = re.search(r"gt=(\d+)", r.text).group(1)
 
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -218,12 +217,10 @@ class Twitter:
         self.session = r.cookies["auth_token"]
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
-    def login(self, username: str = None, password: str = None, email: str = None, session: str = None):
+    def login(self, username: str = None, password: str = None, email: str = None, session: str = None, otp_handler: callable = None):
         if username and password:
             headers = {
                 "Authorization": "",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Accept-Encoding": "gzip, deflate",
                 "Accept-Language": "en-US,en;q=0.9",
                 "Referer": "https://twitter.com/",
                 "Sec-Fetch-Dest": "document",
@@ -237,8 +234,6 @@ class Twitter:
             guest_token = re.search(r"gt=(\d+)", r.text).group(1)
 
             headers = {
-                "Accept": "*/*",
-                "Accept-Encoding": "gzip, deflate",
                 "Accept-Language": "en-US,en;q=0.9",
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
@@ -382,6 +377,7 @@ class Twitter:
             data = r.json()
 
             if data["subtasks"][0]["subtask_id"] == "LoginAcid":
+                otp = otp_handler()
                 flow_token = data["flow_token"]
                 body = {
                     "flow_token": flow_token,
@@ -390,7 +386,7 @@ class Twitter:
                             "subtask_id": "LoginAcid",
                             "enter_text": {
                                 "link": "next_link",
-                                "text": email
+                                "text": otp
                             }
                         }
                     ]
@@ -407,9 +403,7 @@ class Twitter:
 
             headers = {
                 "Authorization": "",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Accept-Encoding": "gzip, deflate",
-                "Accept-Language": "en-US,en;q=0.9",
+                        "Accept-Language": "en-US,en;q=0.9",
                 "Sec-Fetch-Dest": "document",
                 "Sec-Fetch-Mode": "navigate",
                 "Sec-Fetch-Site": "same-origin",
@@ -423,8 +417,6 @@ class Twitter:
     def solve_captcha(self):
         headers = {
             "Authorization": "",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode": "navigate",
@@ -463,10 +455,8 @@ class Twitter:
             else:
                 raise Exception("Failed to solve captcha")
 
-    def change_password(self, current_password: str, password: str):
+    def change_password(self, password: str, new_password: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/settings/password",
             "Sec-Fetch-Dest": "empty",
@@ -478,18 +468,16 @@ class Twitter:
             "X-Twitter-Client-Language": "en"
         }
         body = {
-            "current_password": current_password,
-            "password": password,
-            "password_confirmation": password
+            "current_password": password,
+            "password": new_password,
+            "password_confirmation": new_password
         }
         r = self._client.post("https://twitter.com/i/api/i/account/change_password.json", headers=headers, data=body)
         r.raise_for_status()
         self.session = r.cookies["auth_token"]
 
-    def change_email(self, current_password: str, email: str, otp_handler: callable):
+    def change_email(self, password: str, new_email: str, otp_handler: callable):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/",
             "Sec-Fetch-Dest": "empty",
@@ -564,7 +552,7 @@ class Twitter:
                 {
                     "subtask_id": "DeviceAssocEnterPassword",
                     "enter_password": {
-                        "password": current_password,
+                        "password": password,
                         "link": "next_link"
                     }
                 }
@@ -576,7 +564,7 @@ class Twitter:
         flow_token = data["flow_token"]
 
         body = {
-            "email": email,
+            "email": new_email,
             "flow_token": flow_token
         }
         r = self._client.post("https://api.twitter.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
@@ -599,7 +587,7 @@ class Twitter:
                                 }
                             }
                         ],
-                        "email": email,
+                        "email": new_email,
                         "link": "next_link"
                     }
                 },
@@ -607,7 +595,7 @@ class Twitter:
                     "subtask_id": "EmailAssocVerifyEmail",
                     "email_verification": {
                         "code": otp,
-                        "email": email,
+                        "email": new_email,
                         "link": "next_link"
                     }
                 }
@@ -678,8 +666,6 @@ class Twitter:
 
     def like(self, tweet_id: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -700,8 +686,6 @@ class Twitter:
 
     def follow(self, user: User):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": f"https://twitter.com/{user.username}",
             "Sec-Fetch-Dest": "empty",
@@ -719,8 +703,6 @@ class Twitter:
 
     def tweet(self, text: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -769,8 +751,6 @@ class Twitter:
 
     def reply(self, tweet_id: str, text: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -821,8 +801,6 @@ class Twitter:
 
     def retweet(self, tweet_id: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -844,8 +822,6 @@ class Twitter:
 
     def bookmark(self, tweet_id: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -866,8 +842,6 @@ class Twitter:
 
     def watch_space(self, id: str, sleep_m: int):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -934,8 +908,6 @@ class Twitter:
 
     def delete_tweet(self, tweet_id: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -957,8 +929,6 @@ class Twitter:
 
     def delete_retweet(self, tweet_id: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -984,12 +954,10 @@ class Twitter:
     def get_space_id(self, url: str):
         return re.search(r"\/spaces\/([A-Za-z0-9]+)", url).group(1)
 
-    def get_space_info(self, id: str):
+    def get_space_info(self, space_id: str):
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
-            "Referer": f"https://twitter.com/i/spaces/{id}",
+            "Referer": f"https://twitter.com/i/spaces/{space_id}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1000,7 +968,7 @@ class Twitter:
         }
         params = {
             "variables": json.dumps({
-                "id": id,
+                "id": space_id,
                 "isMetatagsQuery": True,
                 "withReplays": True,
                 "withListeners": True
@@ -1036,8 +1004,6 @@ class Twitter:
 
     def get_user_info(self, username: str) -> User:
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": f"https://twitter.com/{username}",
             "Sec-Fetch-Dest": "empty",
@@ -1075,8 +1041,6 @@ class Twitter:
 
     def get_user_tweets(self, user: User) -> list[Tweet]:
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": f"https://twitter.com/{user.username}",
             "Sec-Fetch-Dest": "empty",
@@ -1126,8 +1090,6 @@ class Twitter:
 
     def get_tweet_info(self, url: str) -> Tweet:
         headers = {
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": url,
             "Sec-Fetch-Dest": "empty",
