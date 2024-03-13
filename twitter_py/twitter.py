@@ -34,7 +34,6 @@ class Twitter:
     def signup(self, name: str, email: str, password: str, otp_handler: callable):
         headers = {
             "Authorization": "",
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/",
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode": "navigate",
@@ -47,7 +46,6 @@ class Twitter:
         guest_token = re.search(r"gt=(\d+)", r.text).group(1)
 
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
@@ -221,7 +219,6 @@ class Twitter:
         if username and password:
             headers = {
                 "Authorization": "",
-                "Accept-Language": "en-US,en;q=0.9",
                 "Referer": "https://twitter.com/",
                 "Sec-Fetch-Dest": "document",
                 "Sec-Fetch-Mode": "navigate",
@@ -234,7 +231,6 @@ class Twitter:
             guest_token = re.search(r"gt=(\d+)", r.text).group(1)
 
             headers = {
-                "Accept-Language": "en-US,en;q=0.9",
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
@@ -403,7 +399,6 @@ class Twitter:
 
             headers = {
                 "Authorization": "",
-                "Accept-Language": "en-US,en;q=0.9",
                 "Sec-Fetch-Dest": "document",
                 "Sec-Fetch-Mode": "navigate",
                 "Sec-Fetch-Site": "same-origin",
@@ -417,7 +412,6 @@ class Twitter:
     def solve_captcha(self):
         headers = {
             "Authorization": "",
-            "Accept-Language": "en-US,en;q=0.9",
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode": "navigate",
             "Sec-Fetch-Site": "same-origin",
@@ -457,7 +451,6 @@ class Twitter:
 
     def change_password(self, password: str, new_password: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/settings/password",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -478,7 +471,6 @@ class Twitter:
 
     def change_email(self, password: str, new_email: str, otp_handler: callable):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -666,7 +658,6 @@ class Twitter:
 
     def like(self, tweet_id: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -686,7 +677,6 @@ class Twitter:
 
     def follow(self, user: User):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": f"https://twitter.com/{user.username}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -703,7 +693,6 @@ class Twitter:
 
     def tweet(self, text: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -751,7 +740,6 @@ class Twitter:
 
     def reply(self, tweet_id: str, text: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -801,7 +789,6 @@ class Twitter:
 
     def retweet(self, tweet_id: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -822,7 +809,6 @@ class Twitter:
 
     def bookmark(self, tweet_id: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -842,7 +828,6 @@ class Twitter:
 
     def watch_space(self, id: str, sleep_m: int):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -908,7 +893,6 @@ class Twitter:
 
     def delete_tweet(self, tweet_id: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -929,7 +913,6 @@ class Twitter:
 
     def delete_retweet(self, tweet_id: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -956,7 +939,6 @@ class Twitter:
 
     def get_space_info(self, space_id: str):
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": f"https://twitter.com/i/spaces/{space_id}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -1004,7 +986,6 @@ class Twitter:
 
     def get_user_info(self, username: str) -> User:
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": f"https://twitter.com/{username}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -1041,7 +1022,6 @@ class Twitter:
 
     def get_user_tweets(self, user: User) -> list[Tweet]:
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": f"https://twitter.com/{user.username}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
@@ -1090,7 +1070,6 @@ class Twitter:
 
     def get_tweet_info(self, url: str) -> Tweet:
         headers = {
-            "Accept-Language": "en-US,en;q=0.9",
             "Referer": url,
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
