@@ -220,7 +220,7 @@ class Twitter:
         self.session = r.cookies["auth_token"]
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
-    def login(self, username: str = None, password: str = None, email: str = None, session: str = None, otp_handler: callable = None):
+    def login(self, username: str = None, password: str = None, session: str = None, otp_handler: callable = None):
         if username and password:
             if not self.guest_token:
                 self._refresh_guest_token()
