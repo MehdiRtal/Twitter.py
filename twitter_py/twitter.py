@@ -403,7 +403,7 @@ class Twitter:
 
             headers = {
                 "Authorization": "",
-                        "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Language": "en-US,en;q=0.9",
                 "Sec-Fetch-Dest": "document",
                 "Sec-Fetch-Mode": "navigate",
                 "Sec-Fetch-Site": "same-origin",
