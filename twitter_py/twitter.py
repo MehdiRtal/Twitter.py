@@ -17,6 +17,7 @@ class Twitter:
         self._client = httpx.Client(proxies=f"http://{proxy}" if proxy else None, timeout=httpx.Timeout(10, read=30))
         self.session = None
         self.username = None
+        self.guest_token = None
         csrf_token = generate_csrf_token()
         ua = UserAgent()
         user_agent = ua.chrome
@@ -31,7 +32,7 @@ class Twitter:
             "ct0": csrf_token
         })
 
-    def signup(self, name: str, email: str, password: str, otp_handler: callable):
+    def _refresh_guest_token(self):
         headers = {
             "Authorization": "",
             "Referer": "https://twitter.com/",
@@ -43,14 +44,18 @@ class Twitter:
         }
         r = self._client.get("https://twitter.com/", headers=headers, follow_redirects=True)
         r.raise_for_status()
-        guest_token = re.search(r"gt=(\d+)", r.text).group(1)
+        self.guest_token = re.search(r"gt=(\d+)", r.text).group(1)
+
+    def signup(self, name: str, email: str, password: str, otp_handler: callable):
+        if not self.guest_token:
+            self._refresh_guest_token()
 
         headers = {
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
             "X-Client-Transaction-Id": generate_transaction_id(),
-            "X-Guest-Token": guest_token,
+            "X-Guest-Token": self.guest_token,
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Client-Language": "en",
         }
@@ -217,25 +222,15 @@ class Twitter:
 
     def login(self, username: str = None, password: str = None, email: str = None, session: str = None, otp_handler: callable = None):
         if username and password:
-            headers = {
-                "Authorization": "",
-                "Referer": "https://twitter.com/",
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
-            r = self._client.get("https://twitter.com/", headers=headers, follow_redirects=True)
-            r.raise_for_status()
-            guest_token = re.search(r"gt=(\d+)", r.text).group(1)
+            if not self.guest_token:
+                self._refresh_guest_token()
 
             headers = {
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
                 "X-Client-Transaction-Id": generate_transaction_id(),
-                "X-Guest-Token": guest_token,
+                "X-Guest-Token": self.guest_token,
                 "X-Twitter-Active-User": "yes",
                 "X-Twitter-Client-Language": "en",
             }
@@ -855,7 +850,7 @@ class Twitter:
 
         media_key = self.get_space_info(id)["metadata"]["media_key"]
 
-        r = self._client.get(f"https://twitter.com/i/api/1.1/live_video_stream/status/{media_key}?client=web&use_syndication_guest_id=false&cookie_set_host=twitter.com", headers=headers)
+        r = self._client.get(f"https://twitter.com/i/api/1.1/live_video_stream/status/{media_key}?client=web&use_syndication_guest_id=False&cookie_set_host=twitter.com", headers=headers)
         r.raise_for_status()
         r_json = r.json()
         chat_token = r_json["chatToken"]
@@ -985,15 +980,18 @@ class Twitter:
         return r.json()["data"]["audioSpace"]
 
     def get_user_info(self, username: str) -> User:
+        if not self.guest_token:
+            self._refresh_guest_token()
+
         headers = {
             "Referer": f"https://twitter.com/{username}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Site": "same-site",
             "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Guest-Token": self.guest_token,
             "X-Twitter-Active-User": "yes",
-            "X-Twitter-Auth-Type": "OAuth2Session",
-            "X-Twitter-Client-Language": "en"
+            "X-Twitter-Client-Language": "en",
         }
         params = {
             "variables": json.dumps({
@@ -1001,34 +999,38 @@ class Twitter:
                 "withSafetyModeUserFields": True
             }),
             "features": json.dumps({
-                "hidden_profile_likes_enabled": False,
-                "hidden_profile_subscriptions_enabled": True,
-                "responsive_web_graphql_exclude_directive_enabled": True,
-                "verified_phone_label_enabled": False,
-                "subscriptions_verification_info_is_identity_verified_enabled": False,
-                "subscriptions_verification_info_verified_since_enabled": True,
-                "highlights_tweets_tab_ui_enabled": True,
-                "creator_subscriptions_tweet_preview_api_enabled": True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-                "responsive_web_graphql_timeline_navigation_enabled": True
+                "hidden_profile_likes_enabled":True,
+                "hidden_profile_subscriptions_enabled":True,
+                "responsive_web_graphql_exclude_directive_enabled":True,
+                "verified_phone_label_enabled":False,
+                "subscriptions_verification_info_is_identity_verified_enabled":True,
+                "subscriptions_verification_info_verified_since_enabled":True,
+                "highlights_tweets_tab_ui_enabled":True,
+                "responsive_web_twitter_article_notes_tab_enabled":True,
+                "creator_subscriptions_tweet_preview_api_enabled":True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,
+                "responsive_web_graphql_timeline_navigation_enabled":True
             }),
             "fieldToggles": json.dumps({
                 "withAuxiliaryUserLabels": False
             }),
         }
-        r = self._client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
+        r = self._client.get("https://api.twitter.com/graphql/k5XapwcSikNsEsILW5FvgA/UserByScreenName", headers=headers, params=params)
         r.raise_for_status()
         return User(**r.json()["data"]["user"]["result"])
 
     def get_user_tweets(self, user: User) -> list[Tweet]:
+        if not self.guest_token:
+            self._refresh_guest_token()
+
         headers = {
             "Referer": f"https://twitter.com/{user.username}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Site": "same-site",
             "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Guest-Token": self.guest_token,
             "X-Twitter-Active-User": "yes",
-            "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
         }
         params = {
@@ -1041,84 +1043,83 @@ class Twitter:
                 "withV2Timeline": True
             }),
             "features": json.dumps({
-                "responsive_web_graphql_exclude_directive_enabled": True,
-                "verified_phone_label_enabled": False,
-                "responsive_web_home_pinned_timelines_enabled": True,
-                "creator_subscriptions_tweet_preview_api_enabled": True,
-                "responsive_web_graphql_timeline_navigation_enabled": True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-                "c9s_tweet_anatomy_moderator_badge_enabled": True,
-                "tweetypie_unmention_optimization_enabled": True,
-                "responsive_web_edit_tweet_api_enabled": True,
-                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
-                "view_counts_everywhere_api_enabled": True,
-                "longform_notetweets_consumption_enabled": True,
-                "responsive_web_twitter_article_tweet_consumption_enabled": False,
-                "tweet_awards_web_tipping_enabled": False,
-                "freedom_of_speech_not_reach_fetch_enabled": True,
-                "standardized_nudges_misinfo": True,
-                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
-                "longform_notetweets_rich_text_read_enabled": True,
-                "longform_notetweets_inline_media_enabled": True,
-                "responsive_web_media_download_video_enabled": False,
-                "responsive_web_enhance_cards_enabled": False
+                "responsive_web_graphql_exclude_directive_enabled":True,
+                "verified_phone_label_enabled":False,
+                "creator_subscriptions_tweet_preview_api_enabled":True,
+                "responsive_web_graphql_timeline_navigation_enabled":True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,
+                "c9s_tweet_anatomy_moderator_badge_enabled":True,
+                "tweetypie_unmention_optimization_enabled":True,
+                "responsive_web_edit_tweet_api_enabled":True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled":True,
+                "view_counts_everywhere_api_enabled":True,
+                "longform_notetweets_consumption_enabled":True,
+                "responsive_web_twitter_article_tweet_consumption_enabled":True,
+                "tweet_awards_web_tipping_enabled":False,
+                "freedom_of_speech_not_reach_fetch_enabled":True,
+                "standardized_nudges_misinfo":True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":True,
+                "rweb_video_timestamps_enabled":True,
+                "longform_notetweets_rich_text_read_enabled":True,
+                "longform_notetweets_inline_media_enabled":True,
+                "responsive_web_enhance_cards_enabled":False
             })
         }
-        r = self._client.get("https://twitter.com/i/api/graphql/VgitpdpNZ-RUIp5D1Z_D-A/UserTweets", headers=headers, params=params)
+        r = self._client.get("https://api.twitter.com/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets", headers=headers, params=params)
         r.raise_for_status()
-        return [Tweet(**tweet) for tweet in r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"][1]["entries"]]
+        for instruction in r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"]:
+            if instruction["type"] == "TimelineAddEntries":
+                return [Tweet(**tweet["content"]["itemContent"]["tweet_results"]["result"]) for tweet in instruction["entries"]]
 
     def get_tweet_info(self, url: str) -> Tweet:
+        if not self.guest_token:
+            self._refresh_guest_token()
+
         headers = {
             "Referer": url,
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
             "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Guest-Token": self.guest_token,
             "X-Twitter-Active-User": "yes",
-            "X-Twitter-Auth-Type": "OAuth2Session",
             "X-Twitter-Client-Language": "en"
         }
         params = {
             "variables": json.dumps({
-                "focalTweetId": self.get_tweet_id(url),
-                "with_rux_injections": False,
-                "includePromotedContent": True,
-                "withCommunity": True,
-                "withQuickPromoteEligibilityTweetFields": True,
-                "withBirdwatchNotes": True,
-                "withVoice": True,
-                "withV2Timeline": True
+                "tweetId":self.get_tweet_id(url),
+                "withCommunity":False,
+                "includePromotedContent":False,
+                "withVoice":False
             }),
             "features": json.dumps({
-                "rweb_lists_timeline_redesign_enabled": True,
-                "responsive_web_graphql_exclude_directive_enabled": True,
-                "verified_phone_label_enabled": False,
-                "creator_subscriptions_tweet_preview_api_enabled": True,
-                "responsive_web_graphql_timeline_navigation_enabled": True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-                "tweetypie_unmention_optimization_enabled": True,
-                "responsive_web_edit_tweet_api_enabled": True,
-                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
-                "view_counts_everywhere_api_enabled": True,
-                "longform_notetweets_consumption_enabled": True,
-                "responsive_web_twitter_article_tweet_consumption_enabled": False,
-                "tweet_awards_web_tipping_enabled": False,
-                "freedom_of_speech_not_reach_fetch_enabled": True,
-                "standardized_nudges_misinfo": True,
-                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
-                "longform_notetweets_rich_text_read_enabled": True,
-                "longform_notetweets_inline_media_enabled": True,
-                "responsive_web_media_download_video_enabled": False,
-                "responsive_web_enhance_cards_enabled": False
-            }),
+                "creator_subscriptions_tweet_preview_api_enabled":True,
+                "c9s_tweet_anatomy_moderator_badge_enabled":True,
+                "tweetypie_unmention_optimization_enabled":True,
+                "responsive_web_edit_tweet_api_enabled":True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled":True,
+                "view_counts_everywhere_api_enabled":True,
+                "longform_notetweets_consumption_enabled":True,
+                "responsive_web_twitter_article_tweet_consumption_enabled":True,
+                "tweet_awards_web_tipping_enabled":False,
+                "freedom_of_speech_not_reach_fetch_enabled":True,
+                "standardized_nudges_misinfo":True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":True,
+                "rweb_video_timestamps_enabled":True,
+                "longform_notetweets_rich_text_read_enabled":True,
+                "longform_notetweets_inline_media_enabled":True,
+                "responsive_web_graphql_exclude_directive_enabled":True,
+                "verified_phone_label_enabled":False,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,
+                "responsive_web_graphql_timeline_navigation_enabled":True,
+                "responsive_web_enhance_cards_enabled":False}),
             "fieldToggles": json.dumps({
                 "withArticleRichContentState": False
             })
         }
-        r = self._client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", headers=headers, params=params)
+        r = self._client.get("https://api.twitter.com/graphql/OUKdeWm3g4tDbW5hffX_QA/TweetResultByRestId", headers=headers, params=params)
         r.raise_for_status()
-        return Tweet(**r.json()["data"]["threaded_conversation_with_injections_v2"]["instructions"][0]["entries"][0])
+        return Tweet(**r.json()["data"]["tweetResult"]["result"])
 
     def __enter__(self):
         return self
