@@ -9,6 +9,7 @@ import time
 
 from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token, generate_transaction_id
+from twitter_py.exceptions import UserNotFound, TweetNotFound
 
 
 class Twitter:
@@ -1017,6 +1018,8 @@ class Twitter:
         }
         r = self._client.get("https://api.twitter.com/graphql/k5XapwcSikNsEsILW5FvgA/UserByScreenName", headers=headers, params=params)
         r.raise_for_status()
+        if not r.json()["data"]:
+            raise UserNotFound
         return User(**r.json()["data"]["user"]["result"])
 
     def get_user_tweets(self, user: User) -> list[Tweet]:
@@ -1119,6 +1122,8 @@ class Twitter:
         }
         r = self._client.get("https://api.twitter.com/graphql/OUKdeWm3g4tDbW5hffX_QA/TweetResultByRestId", headers=headers, params=params)
         r.raise_for_status()
+        if not r.json()["data"]["tweetResult"]:
+            raise TweetNotFound
         return Tweet(**r.json()["data"]["tweetResult"]["result"])
 
     def __enter__(self):
