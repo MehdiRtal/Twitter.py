@@ -43,8 +43,9 @@ class Twitter:
             "Sec-Fetch-User": "?1",
             "Upgrade-Insecure-Requests": "1"
         }
-        r = self._client.get("https://twitter.com/", headers=headers, follow_redirects=True)
+        r = httpx.get("https://twitter.com/", headers=headers, follow_redirects=True)
         r.raise_for_status()
+        self._client.cookies.update(dict(r.cookies))
         self.guest_token = re.search(r"gt=(\d+)", r.text).group(1)
 
     def signup(self, name: str, email: str, password: str, otp_handler: callable):
