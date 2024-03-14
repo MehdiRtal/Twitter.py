@@ -21,13 +21,13 @@ class Twitter:
         self.guest_token = None
         csrf_token = generate_csrf_token()
         ua = UserAgent()
-        user_agent = ua.chrome
-        if user_agent.endswith(" "):
-            user_agent = user_agent[:-1]
+        self.user_agent = ua.chrome
+        if self.user_agent.endswith(" "):
+            self.user_agent = self.user_agent[:-1]
         self._client.headers.update({
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
             "X-Csrf-Token": csrf_token,
-            "User-Agent": user_agent,
+            "User-Agent": self.user_agent,
         })
         self._client.cookies.update({
             "ct0": csrf_token
@@ -41,7 +41,8 @@ class Twitter:
             "Sec-Fetch-Mode": "navigate",
             "Sec-Fetch-Site": "none",
             "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1"
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": self.user_agent
         }
         r = httpx.get("https://twitter.com/", headers=headers, follow_redirects=True)
         r.raise_for_status()
