@@ -970,7 +970,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             }),
         }
-        r = self._private_client.get("https://twitter.com/i/api/graphql/MZwo_AA10ZpJfbY4ZekqQA/AudioSpaceById", headers=headers, params=params)
+        r = self._public_client.get("https://twitter.com/i/api/graphql/MZwo_AA10ZpJfbY4ZekqQA/AudioSpaceById", headers=headers, params=params)
         r.raise_for_status()
         return r.json()["data"]["audioSpace"]
 
@@ -1008,7 +1008,7 @@ class Twitter:
                 "withAuxiliaryUserLabels": False
             }),
         }
-        r = self._private_client.get("https://api.twitter.com/graphql/k5XapwcSikNsEsILW5FvgA/UserByScreenName", headers=headers, params=params)
+        r = self._public_client.get("https://api.twitter.com/graphql/k5XapwcSikNsEsILW5FvgA/UserByScreenName", headers=headers, params=params)
         r.raise_for_status()
         if not r.json()["data"]:
             raise UserNotFound
@@ -1058,7 +1058,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled":False
             })
         }
-        r = self._private_client.get("https://api.twitter.com/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets", headers=headers, params=params)
+        r = self._public_client.get("https://api.twitter.com/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets", headers=headers, params=params)
         r.raise_for_status()
         for instruction in r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
@@ -1108,7 +1108,7 @@ class Twitter:
                 "withArticleRichContentState": False
             })
         }
-        r = self._private_client.get("https://api.twitter.com/graphql/OUKdeWm3g4tDbW5hffX_QA/TweetResultByRestId", headers=headers, params=params)
+        r = self._public_client.get("https://api.twitter.com/graphql/OUKdeWm3g4tDbW5hffX_QA/TweetResultByRestId", headers=headers, params=params)
         r.raise_for_status()
         if not r.json()["data"]["tweetResult"]:
             raise TweetNotFound
