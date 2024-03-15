@@ -3,3 +3,9 @@ class TweetNotFound(BaseException):
 
 class UserNotFound(BaseException):
     pass
+
+class InvalidCredentials(BaseException):
+    pass
+
+class InvalidOTP(BaseException):
+    pass
