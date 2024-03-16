@@ -599,21 +599,24 @@ class Twitter:
 
     def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
         if avatar:
+            headers = {
+                "Referer": "https://twitter.com/",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-site",
+                "X-Csrf-Token": self.csrf_token,
+                "X-Twitter-Auth-Type": "OAuth2Session"
+            }
+            headers.update(self.graphql_headers)
             params = {
                 "command": "INIT",
                 "total_bytes": len(avatar),
                 "media_type": "image/jpeg"
             }
-            headers = {
-                "Referer": "https://twitter.com/"
-            }
             r = self._private_client.post("https://upload.twitter.com/i/media/upload.json", params=params, headers=headers)
             r.raise_for_status()
             media_id = r.json()["media_id"]
 
-            headers = {
-                "Referer": "https://twitter.com/"
-            }
             files = {
                 "media": ("blob", avatar, "application/octet-stream")
             }
@@ -625,9 +628,6 @@ class Twitter:
             r = self._private_client.post("https://upload.twitter.com/i/media/upload.json", params=params, headers=headers, files=files)
             r.raise_for_status()
 
-            headers = {
-                "Referer": "https://twitter.com/"
-            }
             params = {
                 "command": "FINALIZE",
                 "media_id": media_id,
@@ -636,22 +636,46 @@ class Twitter:
             r = self._private_client.post("https://upload.twitter.com/i/media/upload.json", params=params, headers=headers)
             r.raise_for_status()
 
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded"
+            body = {
+                "include_profile_interstitial_type": "1",
+                "include_blocking": "1",
+                "include_blocked_by": "1",
+                "include_followed_by": "1",
+                "include_want_retweets": "1",
+                "include_mute_edge": "1",
+                "include_can_dm": "1",
+                "include_can_media_tag": "1",
+                "include_ext_has_nft_avatar": "1",
+                "include_ext_is_blue_verified": "1",
+                "include_ext_verified_type": "1",
+                "include_ext_profile_image_shape": "1",
+                "skip_status": "1",
+                "return_user": True,
+                "media_id": media_id
             }
-            body = f"include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&include_can_media_tag=1&include_ext_has_nft_avatar=1&include_ext_is_blue_verified=1&include_ext_verified_type=1&include_ext_profile_image_shape=1&skip_status=1&return_user= True&media_id={media_id}"
             r = self._private_client.post("https://api.twitter.com/1.1/account/update_profile_image.json", headers=headers, data=body)
             r.raise_for_status()
 
         if name or bio:
             headers = {
-                "Content-Type": "application/x-www-form-urlencoded"
+                "Referer": "https://twitter.com/",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-site",
+                "X-Csrf-Token": self.csrf_token,
+                "X-Twitter-Auth-Type": "OAuth2Session"
             }
-            body = "birthdate_day=0&birthdate_month=0&birthdate_year=0"
-            r = self._private_client.post("https://api.twitter.com/1.1/account/update_profile.json", headers=headers, data=body)
-            r.raise_for_status()
+            headers.update(self.graphql_headers)
+            # body = "birthdate_day=0&birthdate_month=0&birthdate_year=0"
+            # r = self._private_client.post("https://api.twitter.com/1.1/account/update_profile.json", headers=headers, data=body)
+            # r.raise_for_status()
 
-            body = f"displayNameMaxLength=50&name={name}&description={bio}&location="
+            body = {
+                "displayNameMaxLength": "50",
+                "name": name,
+                "description": bio,
+                "location": ""
+            }
             r = self._private_client.post("https://api.twitter.com/1.1/account/update_profile.json", headers=headers, data=body)
             r.raise_for_status()
 
