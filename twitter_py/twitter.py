@@ -666,10 +666,6 @@ class Twitter:
                 "X-Twitter-Auth-Type": "OAuth2Session"
             }
             headers.update(self.graphql_headers)
-            # body = "birthdate_day=0&birthdate_month=0&birthdate_year=0"
-            # r = self._private_client.post("https://api.twitter.com/1.1/account/update_profile.json", headers=headers, data=body)
-            # r.raise_for_status()
-
             body = {
                 "displayNameMaxLength": "50",
                 "name": name,
