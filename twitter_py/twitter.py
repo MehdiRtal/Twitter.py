@@ -1262,7 +1262,11 @@ class Twitter:
         r.raise_for_status()
         for instruction in r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
-                return [Tweet(**tweet["content"]["itemContent"]["tweet_results"]["result"]) for tweet in instruction["entries"]]
+                return [
+                    Tweet(**tweet["content"]["itemContent"]["tweet_results"]["result"])
+                    for tweet in instruction["entries"]
+                    if tweet["content"]["entryType"] == "TimelineTimelineItem"
+                ]
 
     def get_tweet_info(self, url: str) -> Tweet:
         headers = {
@@ -1316,6 +1320,104 @@ class Twitter:
         for instruction in r.json()["data"]["threaded_conversation_with_injections_v2"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
                 return Tweet(**instruction["entries"][0]["content"]["itemContent"]["tweet_results"]["result"])
+
+    def get_user_followers(self, user: User) -> list[User]:
+        headers = {
+            "Referer": f"https://twitter.com/{user.username}",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Csrf-Token": self.csrf_token,
+            "X-Twitter-Auth-Type": "OAuth2Session",
+        }
+        headers.update(self.graphql_headers)
+        params = {
+            "variables": json.dumps({
+                "userId": user.id,
+                "count": 20,
+                "includePromotedContent": False
+            }),
+            "features": json.dumps({
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": True,
+                "tweet_awards_web_tipping_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "rweb_video_timestamps_enabled": True,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "responsive_web_enhance_cards_enabled": False
+            })
+        }
+        r = self._private_client.get("https://twitter.com/i/api/graphql/Uc7ZOJrxsJAzMVCcaxis8Q/Followers", headers=headers, params=params)
+        r.raise_for_status()
+        for instruction in r.json()["data"]["user"]["result"]["timeline"]["timeline"]["instructions"]:
+            if instruction["type"] == "TimelineAddEntries":
+                return [
+                    User(**user["content"]["itemContent"]["user_results"]["result"])
+                    for user in instruction["entries"]
+                    if user["content"]["entryType"] == "TimelineTimelineItem"
+                ]
+
+    def get_user_following(self, user: User) -> list[User]:
+        headers = {
+            "Referer": f"https://twitter.com/{user.username}",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Csrf-Token": self.csrf_token,
+            "X-Twitter-Auth-Type": "OAuth2Session",
+        }
+        headers.update(self.graphql_headers)
+        params = {
+            "variables": json.dumps({
+                "userId": user.id,
+                "count": 20,
+                "includePromotedContent": False
+            }),
+            "features": json.dumps({
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": True,
+                "tweet_awards_web_tipping_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "rweb_video_timestamps_enabled": True,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "responsive_web_enhance_cards_enabled": False
+            })
+        }
+        r = self._private_client.get("https://twitter.com/i/api/graphql/PiHWpObvX9tbClrUl6rL9g/Following", headers=headers, params=params)
+        r.raise_for_status()
+        for instruction in r.json()["data"]["user"]["result"]["timeline"]["timeline"]["instructions"]:
+            if instruction["type"] == "TimelineAddEntries":
+                return [
+                    User(**user["content"]["itemContent"]["user_results"]["result"])
+                    for user in instruction["entries"]
+                    if user["content"]["entryType"] == "TimelineTimelineItem"
+                ]
 
     def __enter__(self):
         return self
