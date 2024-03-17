@@ -693,7 +693,7 @@ class Twitter:
             },
             "queryId": "lI07N6Otwv1PhnEgXILM7A"
         }
-        r = self._private_client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body)
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body)
         r.raise_for_status()
 
     async def follow(self, user: User):
