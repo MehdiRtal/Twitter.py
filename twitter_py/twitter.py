@@ -689,7 +689,7 @@ class Twitter:
         r = await self._private_client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body)
         r.raise_for_status()
 
-    async def follow(self, user: User):
+    async def follow(self, user_id: str):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -700,7 +700,7 @@ class Twitter:
         }
         headers.update(self.graphql_headers)
         params = {
-            "user_id": user.id
+            "user_id": user_id
         }
         r = await self._private_client.post("https://twitter.com/i/api/1.1/friendships/create.json", headers=headers, params=params)
         r.raise_for_status()
@@ -1282,9 +1282,9 @@ class Twitter:
         r.raise_for_status()
         return User(**r.json()["data"]["user"]["result"])
 
-    async def get_user_tweets(self, user: User) -> list[Tweet]:
+    async def get_user_tweets(self, user_id: str) -> list[Tweet]:
         headers = {
-            "Referer": f"https://twitter.com/{user.username}",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1294,7 +1294,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "userId": user.id,
+                "userId": user_id,
                 "count": 20,
                 "includePromotedContent": True,
                 "withQuickPromoteEligibilityTweetFields": True,
@@ -1335,9 +1335,9 @@ class Twitter:
                     if tweet["content"]["entryType"] == "TimelineTimelineItem"
                 ]
 
-    async def get_user_followers(self, user: User) -> list[User]:
+    async def get_user_followers(self, user_id: str) -> list[User]:
         headers = {
-            "Referer": f"https://twitter.com/{user.username}",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1347,7 +1347,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "userId": user.id,
+                "userId": user_id,
                 "count": 20,
                 "includePromotedContent": False
             }),
@@ -1384,9 +1384,9 @@ class Twitter:
                     if user["content"]["entryType"] == "TimelineTimelineItem"
                 ]
 
-    async def get_user_following(self, user: User) -> list[User]:
+    async def get_user_following(self, user_id: str) -> list[User]:
         headers = {
-            "Referer": f"https://twitter.com/{user.username}",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1396,7 +1396,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "userId": user.id,
+                "userId": user_id,
                 "count": 20,
                 "includePromotedContent": False
             }),
@@ -1521,12 +1521,12 @@ class Twitter:
             raise UserNotFound
         return User(**r.json()["data"]["user"]["result"])
 
-    async def get_user_tweets_public(self, user: User) -> list[Tweet]:
+    async def get_user_tweets_public(self, user_id) -> list[Tweet]:
         if not self.guest_token:
             await self._refresh_guest_token()
 
         headers = {
-            "Referer": f"https://twitter.com/{user.username}",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
@@ -1535,7 +1535,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "userId": user.id,
+                "userId": user_id,
                 "count": 20,
                 "includePromotedContent": True,
                 "withQuickPromoteEligibilityTweetFields": True,
