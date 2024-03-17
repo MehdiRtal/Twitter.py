@@ -67,6 +67,7 @@ class Twitter:
             await self._refresh_guest_token()
 
         headers = {
+            "Referer": "https://twitter.com/",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
@@ -141,15 +142,7 @@ class Twitter:
         r.raise_for_status()
 
         otp = otp_handler()
-        for _ in range(3):
-            try:
-                token = self._captcha_handler(public_key="2CB16598-CB82-4CF7-B332-5990DB66F3AB", url="https://twitter.com/i/flow/signup")
-            except Exception:
-                pass
-            else:
-                break
-        else:
-            raise Exception("Failed to solve captcha")
+        token = self._captcha_handler(public_key="2CB16598-CB82-4CF7-B332-5990DB66F3AB", url="https://twitter.com/i/flow/signup")
         body = {
             "flow_token": flow_token,
             "subtask_inputs": [
@@ -240,6 +233,7 @@ class Twitter:
                 await self._refresh_guest_token()
 
             headers = {
+                "Referer": "https://twitter.com/",
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
@@ -417,7 +411,7 @@ class Twitter:
         headers = {
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Site": "none",
             "Sec-Fetch-User": "?1",
             "Upgrade-Insecure-Requests": "1"
         }
@@ -432,7 +426,6 @@ class Twitter:
             headers.update({
                 "Referer": "https://twitter.com/account/access",
             })
-
             for _ in range(3):
                 token = self._captcha_handler(public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
                 body = {
