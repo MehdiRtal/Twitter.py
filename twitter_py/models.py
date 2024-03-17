@@ -24,7 +24,7 @@ class Tweet(BaseModel):
             AliasPath("tweet", "legacy", "bookmark_count")
         )
     )
-    favorite_count: int = Field(
+    like_count: int = Field(
         None,
         validation_alias=AliasChoices(
             AliasPath("legacy", "favorite_count"),
@@ -43,5 +43,19 @@ class Tweet(BaseModel):
         validation_alias=AliasChoices(
             AliasPath("legacy", "retweet_count"),
             AliasPath("tweet", "legacy", "retweet_count")
+        )
+    )
+    quote_count: int = Field(
+        None,
+        validation_alias=AliasChoices(
+            AliasPath("legacy", "quote_count"),
+            AliasPath("tweet", "legacy", "quote_count")
+        )
+    )
+    views_count: int = Field(
+        None,
+        validation_alias=AliasChoices(
+            AliasPath("views", "count"),
+            AliasPath("tweet", "views", "count")
         )
     )
