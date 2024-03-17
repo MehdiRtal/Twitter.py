@@ -698,7 +698,7 @@ class Twitter:
 
     async def follow(self, user: User):
         headers = {
-            "Referer": f"https://twitter.com/{user.username}",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -756,7 +756,8 @@ class Twitter:
             },
             "queryId": "5V_dkq1jfalfiFOEZ4g47A"
         }
-        await self._private_client.post("https://twitter.com/i/api/graphql/5V_dkq1jfalfiFOEZ4g47A/CreateTweet", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/5V_dkq1jfalfiFOEZ4g47A/CreateTweet", headers=headers, json=body)
+        r.raise_for_status()
 
     async def reply(self, tweet_id: str, text: str):
         headers = {
@@ -804,7 +805,8 @@ class Twitter:
             },
             "queryId": "SoVnbfCycZ7fERGCwpZkYA"
         }
-        await self._private_client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", headers=headers, json=body)
+        r.raise_for_status()
 
     async def retweet(self, tweet_id: str):
         headers = {
@@ -823,7 +825,55 @@ class Twitter:
             },
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
         }
-        await self._private_client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", headers=headers, json=body)
+        r.raise_for_status()
+
+    async def quote(self, url: str, text: str):
+        headers = {
+            "Referer": "https://twitter.com/home",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Csrf-Token": self.csrf_token,
+            "X-Twitter-Auth-Type": "OAuth2Session"
+        }
+        headers.update(self.graphql_headers)
+        body = {
+            "variables": {
+                "tweet_text": text,
+                "attachment_url": url,
+                "dark_request": False,
+                "media": {
+                    "media_entities": [],
+                    "possibly_sensitive": False
+                },
+                "semantic_annotation_ids": []
+            },
+            "features": {
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": True,
+                "tweet_awards_web_tipping_enabled": False,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "rweb_video_timestamps_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_enhance_cards_enabled": False
+            },
+            "queryId": "sgqau0P5BUJPMU_lgjpd_w"
+        }
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/sgqau0P5BUJPMU_lgjpd_w/CreateTweet", headers=headers, json=body)
+        r.raise_for_status()
 
     async def bookmark(self, tweet_id: str):
         headers = {
@@ -841,7 +891,8 @@ class Twitter:
             },
             "queryId": "aoDbu3RHznuiSkQ9aNM67Q"
         }
-        await self._private_client.post("https://twitter.com/i/api/graphql/aoDbu3RHznuiSkQ9aNM67Q/CreateBookmark", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/aoDbu3RHznuiSkQ9aNM67Q/CreateBookmark", headers=headers, json=body)
+        r.raise_for_status()
 
     async def watch_space(self, id: str, sleep_m: int):
         headers = {
@@ -881,13 +932,15 @@ class Twitter:
             "chat_token": chat_token,
             "cookie": cookie
         }
-        await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/accessChat", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/accessChat", headers=headers, json=body)
+        r.raise_for_status()
 
         body = {
             "cookie": cookie,
             "service": "guest"
         }
-        r = await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/authorizeToken", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/authorizeToken", headers=headers, json=body)
+        r.raise_for_status()
 
         body = {
             "auto_play": False,
@@ -904,7 +957,8 @@ class Twitter:
                 "cookie": cookie,
                 "session": session
             }
-            await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/pingWatching", headers=headers, json=body).raise_for_status()
+            r = await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/pingWatching", headers=headers, json=body)
+            r.raise_for_status()
             time.sleep(30)
 
     async def delete_tweet(self, tweet_id: str):
@@ -924,7 +978,8 @@ class Twitter:
             },
             "queryId": "VaenaVgh5q5ih7kvyVjgtg"
         }
-        await self._private_client.post("https://twitter.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", headers=headers, json=body)
+        r.raise_for_status()
 
     async def delete_retweet(self, tweet_id: str):
         headers = {
@@ -943,7 +998,8 @@ class Twitter:
             },
             "queryId": "iQtK4dl5hBmXewYZuEOKVw"
         }
-        await self._private_client.post("https://twitter.com/i/api/graphql/iQtK4dl5hBmXewYZuEOKVw/DeleteRetweet", headers=headers, json=body).raise_for_status()
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/iQtK4dl5hBmXewYZuEOKVw/DeleteRetweet", headers=headers, json=body)
+        r.raise_for_status()
 
     def get_tweet_id(self, url: str):
         return re.search(r"\/status\/(\d+)", url).group(1)
@@ -1052,7 +1108,7 @@ class Twitter:
 
     async def get_tweet_likes(self, url: str) -> list[User]:
         headers = {
-            "Referer": url,
+            "Referer": f"{url}/likes",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1101,7 +1157,7 @@ class Twitter:
 
     async def get_tweet_retweets(self, url: str) -> list[User]:
         headers = {
-            "Referer": url,
+            "Referer": f"{url}/retweets",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1150,7 +1206,7 @@ class Twitter:
 
     async def get_tweet_quotes(self, url: str) -> list[Tweet]:
         headers = {
-            "Referer": url,
+            "Referer": f"{url}/quotes",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
