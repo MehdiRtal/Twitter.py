@@ -9,7 +9,7 @@ import time
 
 from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token, generate_transaction_id
-from twitter_py.exceptions import UserNotFound, TweetNotFound, InvalidCredentials, InvalidOTP
+from twitter_py.exceptions import UserNotFound, TweetNotFound, InvalidCredentials, InvalidOTP, CaptchaFailed
 
 
 class Twitter:
@@ -205,9 +205,12 @@ class Twitter:
             ]
         }
         r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
-        r.raise_for_status()
-        data = r.json()
-        flow_token = data["flow_token"]
+        try:
+            r.raise_for_status()
+            data = r.json()
+            flow_token = data["flow_token"]
+        except Exception:
+            raise InvalidOTP
 
         body = {
             "flow_token": flow_token,
@@ -226,6 +229,8 @@ class Twitter:
         data = r.json()
         self.session = r.cookies["auth_token"]
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
+
+        self.solve_captcha()
 
     async def login(self, username: str = None, password: str = None, session: str = None, otp_handler: callable = None):
         if username and password:
@@ -407,6 +412,8 @@ class Twitter:
             })
             self.session = session
 
+            self.solve_captcha()
+
     async def solve_captcha(self):
         headers = {
             "Sec-Fetch-Dest": "document",
@@ -443,7 +450,9 @@ class Twitter:
                 authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
                 assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
             else:
-                raise Exception("Failed to solve captcha")
+                raise CaptchaFailed
+        elif "login" in str(r.url):
+                raise InvalidCredentials
 
     async def change_password(self, password: str, new_password: str):
         headers = {
@@ -587,8 +596,11 @@ class Twitter:
                 }
             ]
         }
-        r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
-        r.raise_for_status()
+        try:
+            r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+            r.raise_for_status()
+        except Exception:
+            raise InvalidOTP
 
     async def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
         if avatar:

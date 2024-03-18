@@ -1,11 +1,19 @@
-class TweetNotFound(BaseException):
-    pass
+class TweetNotFound(Exception):
+    def __init__(self):
+        super().__init__("Tweet not found.")
 
-class UserNotFound(BaseException):
-    pass
+class UserNotFound(Exception):
+    def __init__(self):
+        super().__init__("User not found.")
 
-class InvalidCredentials(BaseException):
-    pass
+class InvalidCredentials(Exception):
+    def __init__(self):
+        super().__init__("Invalid credentials.")
 
-class InvalidOTP(BaseException):
-    pass
+class InvalidOTP(Exception):
+    def __init__(self):
+        super().__init__("Invalid OTP.")
+
+class CaptchaFailed(Exception):
+    def __init__(self):
+        super().__init__("Captcha failed.")
