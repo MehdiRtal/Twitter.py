@@ -452,7 +452,7 @@ class Twitter:
             else:
                 raise CaptchaFailed
         elif "login" in str(r.url):
-                raise InvalidCredentials
+            raise InvalidCredentials
 
     async def change_password(self, password: str, new_password: str):
         headers = {
