@@ -1046,9 +1046,9 @@ class Twitter:
         r.raise_for_status()
         return r.json()["data"]["audioSpace"]
 
-    async def get_tweet_info(self, url: str) -> Tweet:
+    async def get_tweet_info(self, tweet_id: str) -> Tweet:
         headers = {
-            "Referer": url,
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1058,7 +1058,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "focalTweetId": self.get_tweet_id(url),
+                "focalTweetId": tweet_id,
                 "with_rux_injections": False,
                 "includePromotedContent": True,
                 "withCommunity": True,
@@ -1499,17 +1499,17 @@ class Twitter:
                 "withSafetyModeUserFields": True
             }),
             "features": json.dumps({
-                "hidden_profile_likes_enabled":True,
-                "hidden_profile_subscriptions_enabled":True,
-                "responsive_web_graphql_exclude_directive_enabled":True,
-                "verified_phone_label_enabled":False,
-                "subscriptions_verification_info_is_identity_verified_enabled":True,
-                "subscriptions_verification_info_verified_since_enabled":True,
-                "highlights_tweets_tab_ui_enabled":True,
-                "responsive_web_twitter_article_notes_tab_enabled":True,
-                "creator_subscriptions_tweet_preview_api_enabled":True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,
-                "responsive_web_graphql_timeline_navigation_enabled":True
+                "hidden_profile_likes_enabled": True,
+                "hidden_profile_subscriptions_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "subscriptions_verification_info_is_identity_verified_enabled": True,
+                "subscriptions_verification_info_verified_since_enabled": True,
+                "highlights_tweets_tab_ui_enabled": True,
+                "responsive_web_twitter_article_notes_tab_enabled": True,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "responsive_web_graphql_timeline_navigation_enabled": True
             }),
             "fieldToggles": json.dumps({
                 "withAuxiliaryUserLabels": False
@@ -1543,26 +1543,26 @@ class Twitter:
                 "withV2Timeline": True
             }),
             "features": json.dumps({
-                "responsive_web_graphql_exclude_directive_enabled":True,
-                "verified_phone_label_enabled":False,
-                "creator_subscriptions_tweet_preview_api_enabled":True,
-                "responsive_web_graphql_timeline_navigation_enabled":True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,
-                "c9s_tweet_anatomy_moderator_badge_enabled":True,
-                "tweetypie_unmention_optimization_enabled":True,
-                "responsive_web_edit_tweet_api_enabled":True,
-                "graphql_is_translatable_rweb_tweet_is_translatable_enabled":True,
-                "view_counts_everywhere_api_enabled":True,
-                "longform_notetweets_consumption_enabled":True,
-                "responsive_web_twitter_article_tweet_consumption_enabled":True,
-                "tweet_awards_web_tipping_enabled":False,
-                "freedom_of_speech_not_reach_fetch_enabled":True,
-                "standardized_nudges_misinfo":True,
-                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":True,
-                "rweb_video_timestamps_enabled":True,
-                "longform_notetweets_rich_text_read_enabled":True,
-                "longform_notetweets_inline_media_enabled":True,
-                "responsive_web_enhance_cards_enabled":False
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": True,
+                "tweet_awards_web_tipping_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "rweb_video_timestamps_enabled": True,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "responsive_web_enhance_cards_enabled": False
             })
         }
         r = await self._public_client.get("https://api.twitter.com/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets", headers=headers, params=params)
@@ -1571,12 +1571,12 @@ class Twitter:
             if instruction["type"] == "TimelineAddEntries":
                 return [Tweet(**tweet["content"]["itemContent"]["tweet_results"]["result"]) for tweet in instruction["entries"]]
 
-    async def get_tweet_info_public(self, url: str) -> Tweet:
+    async def get_tweet_info_public(self, tweet_id: str) -> Tweet:
         if not self.guest_token:
             await self._refresh_guest_token()
 
         headers = {
-            "Referer": url,
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1585,32 +1585,33 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "tweetId":self.get_tweet_id(url),
-                "withCommunity":False,
-                "includePromotedContent":False,
-                "withVoice":False
+                "tweetId": tweet_id,
+                "withCommunity": False,
+                "includePromotedContent": False,
+                "withVoice": False
             }),
             "features": json.dumps({
-                "creator_subscriptions_tweet_preview_api_enabled":True,
-                "c9s_tweet_anatomy_moderator_badge_enabled":True,
-                "tweetypie_unmention_optimization_enabled":True,
-                "responsive_web_edit_tweet_api_enabled":True,
-                "graphql_is_translatable_rweb_tweet_is_translatable_enabled":True,
-                "view_counts_everywhere_api_enabled":True,
-                "longform_notetweets_consumption_enabled":True,
-                "responsive_web_twitter_article_tweet_consumption_enabled":True,
-                "tweet_awards_web_tipping_enabled":False,
-                "freedom_of_speech_not_reach_fetch_enabled":True,
-                "standardized_nudges_misinfo":True,
-                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":True,
-                "rweb_video_timestamps_enabled":True,
-                "longform_notetweets_rich_text_read_enabled":True,
-                "longform_notetweets_inline_media_enabled":True,
-                "responsive_web_graphql_exclude_directive_enabled":True,
-                "verified_phone_label_enabled":False,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,
-                "responsive_web_graphql_timeline_navigation_enabled":True,
-                "responsive_web_enhance_cards_enabled":False}),
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": True,
+                "tweet_awards_web_tipping_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "rweb_video_timestamps_enabled": True,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_enhance_cards_enabled": False
+            }),
             "fieldToggles": json.dumps({
                 "withArticleRichContentState": False
             })
