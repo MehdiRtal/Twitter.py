@@ -3,7 +3,7 @@ import json
 import re
 import random
 from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
+from fake_useragent import FakeUserAgent
 import hashlib
 import time
 
@@ -18,8 +18,8 @@ class Twitter:
         self._private_client = httpx.AsyncClient(proxies=f"http://{proxy}" if proxy else None, timeout=httpx.Timeout(10, read=30))
         self._public_client = httpx.AsyncClient(proxies=f"http://{proxy}" if proxy else None, timeout=httpx.Timeout(10, read=30))
         self.csrf_token = generate_csrf_token()
-        ua = UserAgent()
-        self.user_agent = ua.chrome
+        ua = FakeUserAgent(browsers="chrome", platforms="pc")
+        self.user_agent = ua.random
         if self.user_agent.endswith(" "):
             self.user_agent = self.user_agent[:-1]
         self._private_client.headers.update({
@@ -407,7 +407,7 @@ class Twitter:
         elif session:
             self.session = session
             session = json.loads(session)
-            self._private_client.cookies.update({session["cookies"]})
+            self._private_client.cookies.update(session["cookies"])
             self._private_client.headers.update({
                 "User-Agent": session["user_agent"]
             })
