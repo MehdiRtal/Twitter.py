@@ -227,10 +227,8 @@ class Twitter:
         r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
         r.raise_for_status()
         data = r.json()
-        self.session = r.cookies["auth_token"]
+        self.session = json.dumps({"cookies": dict(self._private_client.cookies), "user_agent": self.user_agent})
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
-
-        self.solve_captcha()
 
     async def login(self, username: str = None, password: str = None, session: str = None, otp_handler: callable = None):
         if username and password:
@@ -405,14 +403,16 @@ class Twitter:
                 except Exception:
                     raise InvalidOTP
 
-            self.session = r.cookies["auth_token"]
+            self.session = json.dumps({"cookies": dict(self._private_client.cookies), "user_agent": self.user_agent})
         elif session:
-            self._private_client.cookies.update({
-                "auth_token": session
-            })
             self.session = session
+            session = json.loads(session)
+            self._private_client.cookies.update({session["cookies"]})
+            self._private_client.headers.update({
+                "User-Agent": session["user_agent"]
+            })
 
-            self.solve_captcha()
+            await self.solve_captcha()
 
     async def solve_captcha(self):
         headers = {
@@ -682,7 +682,7 @@ class Twitter:
 
             await self.solve_captcha()
 
-    async def like(self, tweet_id: str):
+    async def like(self, tweet_id: int):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -701,7 +701,7 @@ class Twitter:
         r = await self._private_client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body)
         r.raise_for_status()
 
-    async def follow(self, user_id: str):
+    async def follow(self, user_id: int):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -717,54 +717,7 @@ class Twitter:
         r = await self._private_client.post("https://twitter.com/i/api/1.1/friendships/create.json", headers=headers, params=params)
         r.raise_for_status()
 
-    async def tweet(self, text: str):
-        headers = {
-            "Referer": "https://twitter.com/home",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "X-Csrf-Token": self.csrf_token,
-            "X-Twitter-Auth-Type": "OAuth2Session"
-        }
-        headers.update(self.graphql_headers)
-        body = {
-            "variables": {
-                "tweet_text": text,
-                "dark_request": False,
-                "media": {
-                    "media_entities": [],
-                    "possibly_sensitive": False
-                },
-                "semantic_annotation_ids": []
-            },
-            "features": {
-                "c9s_tweet_anatomy_moderator_badge_enabled": True,
-                "tweetypie_unmention_optimization_enabled": True,
-                "responsive_web_edit_tweet_api_enabled": True,
-                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
-                "view_counts_everywhere_api_enabled": True,
-                "longform_notetweets_consumption_enabled": True,
-                "responsive_web_twitter_article_tweet_consumption_enabled": False,
-                "tweet_awards_web_tipping_enabled": False,
-                "responsive_web_home_pinned_timelines_enabled": True,
-                "longform_notetweets_rich_text_read_enabled": True,
-                "longform_notetweets_inline_media_enabled": True,
-                "responsive_web_graphql_exclude_directive_enabled": True,
-                "verified_phone_label_enabled": False,
-                "freedom_of_speech_not_reach_fetch_enabled": True,
-                "standardized_nudges_misinfo": True,
-                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
-                "responsive_web_media_download_video_enabled": False,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-                "responsive_web_graphql_timeline_navigation_enabled": True,
-                "responsive_web_enhance_cards_enabled": False
-            },
-            "queryId": "5V_dkq1jfalfiFOEZ4g47A"
-        }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/5V_dkq1jfalfiFOEZ4g47A/CreateTweet", headers=headers, json=body)
-        r.raise_for_status()
-
-    async def reply(self, tweet_id: str, text: str):
+    async def reply(self, tweet_id: int, text: str):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -813,7 +766,7 @@ class Twitter:
         r = await self._private_client.post("https://twitter.com/i/api/graphql/SoVnbfCycZ7fERGCwpZkYA/CreateTweet", headers=headers, json=body)
         r.raise_for_status()
 
-    async def retweet(self, tweet_id: str):
+    async def retweet(self, tweet_id: int):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -880,7 +833,7 @@ class Twitter:
         r = await self._private_client.post("https://twitter.com/i/api/graphql/sgqau0P5BUJPMU_lgjpd_w/CreateTweet", headers=headers, json=body)
         r.raise_for_status()
 
-    async def bookmark(self, tweet_id: str):
+    async def bookmark(self, tweet_id: int):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -966,7 +919,54 @@ class Twitter:
             r.raise_for_status()
             time.sleep(30)
 
-    async def delete_tweet(self, tweet_id: str):
+    async def create_tweet(self, text: str):
+        headers = {
+            "Referer": "https://twitter.com/home",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Csrf-Token": self.csrf_token,
+            "X-Twitter-Auth-Type": "OAuth2Session"
+        }
+        headers.update(self.graphql_headers)
+        body = {
+            "variables": {
+                "tweet_text": text,
+                "dark_request": False,
+                "media": {
+                    "media_entities": [],
+                    "possibly_sensitive": False
+                },
+                "semantic_annotation_ids": []
+            },
+            "features": {
+                "c9s_tweet_anatomy_moderator_badge_enabled": True,
+                "tweetypie_unmention_optimization_enabled": True,
+                "responsive_web_edit_tweet_api_enabled": True,
+                "graphql_is_translatable_rweb_tweet_is_translatable_enabled": True,
+                "view_counts_everywhere_api_enabled": True,
+                "longform_notetweets_consumption_enabled": True,
+                "responsive_web_twitter_article_tweet_consumption_enabled": False,
+                "tweet_awards_web_tipping_enabled": False,
+                "responsive_web_home_pinned_timelines_enabled": True,
+                "longform_notetweets_rich_text_read_enabled": True,
+                "longform_notetweets_inline_media_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "freedom_of_speech_not_reach_fetch_enabled": True,
+                "standardized_nudges_misinfo": True,
+                "tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled": True,
+                "responsive_web_media_download_video_enabled": False,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "responsive_web_graphql_timeline_navigation_enabled": True,
+                "responsive_web_enhance_cards_enabled": False
+            },
+            "queryId": "5V_dkq1jfalfiFOEZ4g47A"
+        }
+        r = await self._private_client.post("https://twitter.com/i/api/graphql/5V_dkq1jfalfiFOEZ4g47A/CreateTweet", headers=headers, json=body)
+        r.raise_for_status()
+
+    async def delete_tweet(self, tweet_id: int):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -986,7 +986,7 @@ class Twitter:
         r = await self._private_client.post("https://twitter.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", headers=headers, json=body)
         r.raise_for_status()
 
-    async def delete_retweet(self, tweet_id: str):
+    async def delete_retweet(self, tweet_id: int):
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -1058,7 +1058,7 @@ class Twitter:
         r.raise_for_status()
         return r.json()["data"]["audioSpace"]
 
-    async def get_tweet_info(self, tweet_id: str) -> Tweet:
+    async def get_tweet_info(self, tweet_id: int) -> Tweet:
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -1107,13 +1107,15 @@ class Twitter:
         }
         r = await self._private_client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", headers=headers, params=params)
         r.raise_for_status()
+        if not r.json()["data"]:
+            raise TweetNotFound
         for instruction in r.json()["data"]["threaded_conversation_with_injections_v2"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
                 return Tweet(**instruction["entries"][0]["content"]["itemContent"]["tweet_results"]["result"])
 
-    async def get_tweet_likes(self, url: str) -> list[User]:
+    async def get_tweet_likes(self, tweet_id: int) -> list[User]:
         headers = {
-            "Referer": f"{url}/likes",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1123,7 +1125,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "tweetId": self.get_tweet_id(url),
+                "tweetId": tweet_id,
                 "count": 20,
                 "includePromotedContent": True
             }),
@@ -1160,9 +1162,9 @@ class Twitter:
                     if user["content"]["entryType"] == "TimelineTimelineItem"
                 ]
 
-    async def get_tweet_retweets(self, url: str) -> list[User]:
+    async def get_tweet_retweets(self, tweet_id: int) -> list[User]:
         headers = {
-            "Referer": f"{url}/retweets",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1172,7 +1174,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "tweetId": self.get_tweet_id(url),
+                "tweetId": tweet_id,
                 "count": 20,
                 "includePromotedContent": True
             }),
@@ -1209,9 +1211,9 @@ class Twitter:
                     if user["content"]["entryType"] == "TimelineTimelineItem"
                 ]
 
-    async def get_tweet_quotes(self, url: str) -> list[Tweet]:
+    async def get_tweet_quotes(self, tweet_id: int) -> list[Tweet]:
         headers = {
-            "Referer": f"{url}/quotes",
+            "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1221,7 +1223,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "rawQuery": f"quoted_tweet_id:{self.get_tweet_id(url)}",
+                "rawQuery": f"quoted_tweet_id:{tweet_id}",
                 "count": 20,
                 "querySource": "tdqt",
                 "product":" Top"
@@ -1292,9 +1294,11 @@ class Twitter:
         }
         r = await self._private_client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
         r.raise_for_status()
+        if not r.json()["data"]:
+            raise UserNotFound
         return User(**r.json()["data"]["user"]["result"])
 
-    async def get_user_tweets(self, user_id: str) -> list[Tweet]:
+    async def get_user_tweets(self, user_id: int) -> list[Tweet]:
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -1339,6 +1343,8 @@ class Twitter:
         }
         r = await self._private_client.get("https://twitter.com/i/api/graphql/VgitpdpNZ-RUIp5D1Z_D-A/UserTweets", headers=headers, params=params)
         r.raise_for_status()
+        if not r.json()["data"]["user"]:
+            raise TweetNotFound
         for instruction in r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
                 return [
@@ -1347,7 +1353,7 @@ class Twitter:
                     if tweet["content"]["entryType"] == "TimelineTimelineItem"
                 ]
 
-    async def get_user_followers(self, user_id: str) -> list[User]:
+    async def get_user_followers(self, user_id: int) -> list[User]:
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -1396,7 +1402,7 @@ class Twitter:
                     if user["content"]["entryType"] == "TimelineTimelineItem"
                 ]
 
-    async def get_user_following(self, user_id: str) -> list[User]:
+    async def get_user_following(self, user_id: int) -> list[User]:
         headers = {
             "Referer": "https://twitter.com/home",
             "Sec-Fetch-Dest": "empty",
@@ -1579,11 +1585,13 @@ class Twitter:
         }
         r = await self._public_client.get("https://api.twitter.com/graphql/eS7LO5Jy3xgmd3dbL044EA/UserTweets", headers=headers, params=params)
         r.raise_for_status()
+        if not r.json()["data"]["user"]:
+            raise TweetNotFound
         for instruction in r.json()["data"]["user"]["result"]["timeline_v2"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
                 return [Tweet(**tweet["content"]["itemContent"]["tweet_results"]["result"]) for tweet in instruction["entries"]]
 
-    async def get_tweet_info_public(self, tweet_id: str) -> Tweet:
+    async def get_tweet_info_public(self, tweet_id: int) -> Tweet:
         if not self.guest_token:
             await self._refresh_guest_token()
 
@@ -1638,5 +1646,5 @@ class Twitter:
         return self
 
     async def __aexit__(self, *args):
-        self._private_client.aclose()
-        self._public_client.aclose()
+        await self._private_client.aclose()
+        await self._public_client.aclose()
