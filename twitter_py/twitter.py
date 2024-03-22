@@ -9,7 +9,7 @@ import time
 
 from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token, generate_transaction_id
-from twitter_py.exceptions import UserNotFound, TweetNotFound, InvalidCredentials, InvalidOTP, CaptchaFailed
+from twitter_py.exceptions import UserNotFound, TweetNotFound, InvalidCredentials, InvalidOTP, CaptchaFailed, InvalidEmail
 
 
 class Twitter:
@@ -230,7 +230,7 @@ class Twitter:
         self.session = json.dumps({"cookies": dict(self.r.cookies), "user_agent": self.user_agent})
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
-    async def login(self, username: str = None, password: str = None, session: str = None, otp_handler: callable = None):
+    async def login(self, username: str = None, password: str = None, email: str = None, session: str = None, otp_handler: callable = None):
         if username and password:
             if not self.guest_token:
                 await self._refresh_guest_token()
@@ -383,25 +383,44 @@ class Twitter:
             data = r.json()
 
             if data["subtasks"][0]["subtask_id"] == "LoginAcid":
-                otp = otp_handler()
                 flow_token = data["flow_token"]
-                body = {
-                    "flow_token": flow_token,
-                    "subtask_inputs": [
-                        {
-                            "subtask_id": "LoginAcid",
-                            "enter_text": {
-                                "link": "next_link",
-                                "text": otp
+                if data["subtasks"][0]["enter_text"]["keyboard_type"] == "email":
+                    body = {
+                        "flow_token": flow_token,
+                        "subtask_inputs": [
+                            {
+                                "subtask_id": "LoginAcid",
+                                "enter_text": {
+                                    "text": email,
+                                    "link": "next_link"
+                                }
                             }
-                        }
-                    ]
-                }
-                r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
-                try:
-                    r.raise_for_status()
-                except Exception:
-                    raise InvalidOTP
+                        ]
+                    }
+                    r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+                    try:
+                        r.raise_for_status()
+                    except Exception:
+                        raise InvalidEmail
+                if data["subtasks"][0]["enter_text"]["keyboard_type"] == "text":
+                    otp = otp_handler()
+                    body = {
+                        "flow_token": flow_token,
+                        "subtask_inputs": [
+                            {
+                                "subtask_id": "LoginAcid",
+                                "enter_text": {
+                                    "link": "next_link",
+                                    "text": otp
+                                }
+                            }
+                        ]
+                    }
+                    r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+                    try:
+                        r.raise_for_status()
+                    except Exception:
+                        raise InvalidOTP
 
             self.session = json.dumps({"cookies": dict(r.cookies), "user_agent": self.user_agent})
         elif session:

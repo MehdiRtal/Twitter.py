@@ -14,6 +14,10 @@ class InvalidOTP(Exception):
     def __init__(self):
         super().__init__("Invalid OTP.")
 
+class InvalidEmail(Exception):
+    def __init__(self):
+        super().__init__("Invalid email.")
+
 class CaptchaFailed(Exception):
     def __init__(self):
         super().__init__("Captcha failed.")
