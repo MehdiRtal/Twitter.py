@@ -453,6 +453,15 @@ class Twitter:
                 "Referer": "https://twitter.com/account/access",
             })
             for _ in range(3):
+                if not soup.find("form", {"id": "arkose_form"}):
+                    body = {
+                        "authenticity_token": authenticity_token,
+                        "assignment_token": assignment_token,
+                        "lang": "en",
+                        "flow": ""
+                    }
+                    r = await self._private_client.post("https://twitter.com/account/access", headers=headers, data=body)
+                    break
                 token = self._captcha_handler(public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
                 body = {
                     "authenticity_token": authenticity_token,
@@ -464,8 +473,6 @@ class Twitter:
                 }
                 r = await self._private_client.post("https://twitter.com/account/access", headers=headers, data=body)
                 soup = BeautifulSoup(r.text, "html.parser")
-                if not soup.find("form", {"id": "arkose_form"}):
-                    break
                 authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
                 assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
             else:
