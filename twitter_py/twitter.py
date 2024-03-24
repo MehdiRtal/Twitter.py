@@ -227,7 +227,7 @@ class Twitter:
         r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
         r.raise_for_status()
         data = r.json()
-        self.session = json.dumps({"cookies": dict(self.r.cookies), "user_agent": self.user_agent})
+        self.session = r.cookies["auth_token"]
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
     async def login(self, username: str = None, password: str = None, email: str = None, session: str = None, otp_handler: callable = None):
@@ -422,13 +422,11 @@ class Twitter:
                     except Exception:
                         raise InvalidOTP
 
-            self.session = json.dumps({"cookies": dict(r.cookies), "user_agent": self.user_agent})
+            self.session = r.cookies["auth_token"]
         elif session:
             self.session = session
-            session = json.loads(session)
-            self._private_client.cookies.update(session["cookies"])
-            self._private_client.headers.update({
-                "User-Agent": session["user_agent"]
+            self._private_client.cookies.update({
+                "auth_token": self.session
             })
 
             await self.solve_captcha()
