@@ -227,7 +227,7 @@ class Twitter:
         r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
         r.raise_for_status()
         data = r.json()
-        self.session = r.cookies["auth_token"]
+        self.session = json.dumps({"cookies": dict(self._private_client.cookies), "user_agent": self.user_agent})
         self.username = data["subtasks"][0]["open_account"]["user"]["screen_name"]
 
     async def login(self, username: str = None, password: str = None, email: str = None, session: str = None, otp_handler: callable = None):
@@ -422,12 +422,15 @@ class Twitter:
                     except Exception:
                         raise InvalidOTP
 
-            self.session = r.cookies["auth_token"]
+            self.session = json.dumps({"cookies": dict(self._private_client.cookies), "user_agent": self.user_agent})
         elif session:
             self.session = session
-            self._private_client.cookies.update({
-                "auth_token": self.session
+            session = json.loads(session)
+            self._private_client.cookies.update(session["cookies"])
+            self._private_client.headers.update({
+                "User-Agent": session["user_agent"]
             })
+            self.csrf_token = self._private_client.cookies["ct0"]
 
             await self.solve_captcha()
 
@@ -1300,23 +1303,12 @@ class Twitter:
                 "screen_name": username,
                 "withSafetyModeUserFields": True
             }),
-            "features": json.dumps({
-                "hidden_profile_likes_enabled": False,
-                "hidden_profile_subscriptions_enabled": True,
-                "responsive_web_graphql_exclude_directive_enabled": True,
-                "verified_phone_label_enabled": False,
-                "subscriptions_verification_info_is_identity_verified_enabled": False,
-                "subscriptions_verification_info_verified_since_enabled": True,
-                "highlights_tweets_tab_ui_enabled": True,
-                "creator_subscriptions_tweet_preview_api_enabled": True,
-                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
-                "responsive_web_graphql_timeline_navigation_enabled": True
-            }),
+            "features": json.dumps({"hidden_profile_likes_enabled":True,"hidden_profile_subscriptions_enabled":True,"responsive_web_graphql_exclude_directive_enabled":True,"verified_phone_label_enabled":False,"subscriptions_verification_info_is_identity_verified_enabled":True,"subscriptions_verification_info_verified_since_enabled":True,"highlights_tweets_tab_ui_enabled":True,"responsive_web_twitter_article_notes_tab_enabled":True,"creator_subscriptions_tweet_preview_api_enabled":True,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,"responsive_web_graphql_timeline_navigation_enabled":True}),
             "fieldToggles": json.dumps({
                 "withAuxiliaryUserLabels": False
             }),
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/SAMkL5y_N9pmahSw8yy6gw/UserByScreenName", headers=headers, params=params)
+        r = await self._private_client.get("https://twitter.com/i/api/graphql/k5XapwcSikNsEsILW5FvgA/UserByScreenName", headers=headers, params=params)
         r.raise_for_status()
         if not r.json()["data"]:
             raise UserNotFound
