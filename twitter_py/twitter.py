@@ -629,7 +629,7 @@ class Twitter:
         except Exception:
             raise InvalidOTP
 
-    async def edit_profile(self, name: str = "", bio: str = "", avatar: bytes = None):
+    async def edit_profile(self, name: str = "", bio: str = "", location: str = "", avatar: bytes = None):
         if avatar:
             headers = {
                 "Referer": "https://twitter.com/",
@@ -688,7 +688,7 @@ class Twitter:
             r = await self._private_client.post("https://api.twitter.com/1.1/account/update_profile_image.json", headers=headers, data=body)
             r.raise_for_status()
 
-        if name or bio:
+        if name or bio or location:
             headers = {
                 "Referer": "https://twitter.com/",
                 "Sec-Fetch-Dest": "empty",
@@ -702,7 +702,7 @@ class Twitter:
                 "displayNameMaxLength": "50",
                 "name": name,
                 "description": bio,
-                "location": ""
+                "location": location
             }
             r = await self._private_client.post("https://api.twitter.com/1.1/account/update_profile.json", headers=headers, data=body)
             r.raise_for_status()
