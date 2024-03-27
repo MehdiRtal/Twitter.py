@@ -426,11 +426,11 @@ class Twitter:
         elif session:
             self.session = session
             session = json.loads(session)
+            self.csrf_token = session["cookies"]["ct0"]
             self._private_client.cookies.update(session["cookies"])
             self._private_client.headers.update({
                 "User-Agent": session["user_agent"]
             })
-            self.csrf_token = self._private_client.cookies["ct0"]
 
             await self.solve_captcha()
 
@@ -1303,7 +1303,19 @@ class Twitter:
                 "screen_name": username,
                 "withSafetyModeUserFields": True
             }),
-            "features": json.dumps({"hidden_profile_likes_enabled":True,"hidden_profile_subscriptions_enabled":True,"responsive_web_graphql_exclude_directive_enabled":True,"verified_phone_label_enabled":False,"subscriptions_verification_info_is_identity_verified_enabled":True,"subscriptions_verification_info_verified_since_enabled":True,"highlights_tweets_tab_ui_enabled":True,"responsive_web_twitter_article_notes_tab_enabled":True,"creator_subscriptions_tweet_preview_api_enabled":True,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,"responsive_web_graphql_timeline_navigation_enabled":True}),
+            "features": json.dumps({
+                "hidden_profile_likes_enabled": True,
+                "hidden_profile_subscriptions_enabled": True,
+                "responsive_web_graphql_exclude_directive_enabled": True,
+                "verified_phone_label_enabled": False,
+                "subscriptions_verification_info_is_identity_verified_enabled": True,
+                "subscriptions_verification_info_verified_since_enabled": True,
+                "highlights_tweets_tab_ui_enabled": True,
+                "responsive_web_twitter_article_notes_tab_enabled": True,
+                "creator_subscriptions_tweet_preview_api_enabled": True,
+                "responsive_web_graphql_skip_user_profile_image_extensions_enabled": False,
+                "responsive_web_graphql_timeline_navigation_enabled": True
+            }),
             "fieldToggles": json.dumps({
                 "withAuxiliaryUserLabels": False
             }),
