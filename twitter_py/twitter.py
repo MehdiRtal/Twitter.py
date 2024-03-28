@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from fake_useragent import FakeUserAgent
 import hashlib
 import time
+import asyncio
 
 from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token, generate_transaction_id
@@ -141,8 +142,8 @@ class Twitter:
         r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
         r.raise_for_status()
 
-        otp = otp_handler()
-        token = self._captcha_handler(public_key="2CB16598-CB82-4CF7-B332-5990DB66F3AB", url="https://twitter.com/i/flow/signup")
+        otp = await asyncio.to_thread(otp_handler)
+        token = await asyncio.to_thread(self._captcha_handler, public_key="2CB16598-CB82-4CF7-B332-5990DB66F3AB", url="https://twitter.com/i/flow/signup")
         body = {
             "flow_token": flow_token,
             "subtask_inputs": [
@@ -403,7 +404,7 @@ class Twitter:
                     except Exception:
                         raise InvalidEmail
                 if data["subtasks"][0]["enter_text"]["keyboard_type"] == "text":
-                    otp = otp_handler()
+                    otp = await asyncio.to_thread(otp_handler)
                     body = {
                         "flow_token": flow_token,
                         "subtask_inputs": [
@@ -463,7 +464,7 @@ class Twitter:
                     }
                     r = await self._private_client.post("https://twitter.com/account/access", headers=headers, data=body)
                     break
-                token = self._captcha_handler(public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
+                token = await asyncio.to_thread(self._captcha_handler, public_key="0152B4EB-D2DC-460A-89A1-629838B529C9", url="https://twitter.com/account/access")
                 body = {
                     "authenticity_token": authenticity_token,
                     "assignment_token": assignment_token,
@@ -592,7 +593,7 @@ class Twitter:
         r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
         r.raise_for_status()
 
-        otp = otp_handler()
+        otp = await asyncio.to_thread(otp_handler)
         body = {
             "flow_token": flow_token,
             "subtask_inputs": [
