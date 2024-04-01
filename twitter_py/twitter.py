@@ -1052,7 +1052,7 @@ class Twitter:
         headers.update(self.graphql_headers)
         params = {
             "variables": json.dumps({
-                "id": id,
+                "id": space_id,
                 "isMetatagsQuery": True,
                 "withReplays": True,
                 "withListeners": True
