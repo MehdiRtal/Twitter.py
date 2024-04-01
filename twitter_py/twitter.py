@@ -905,7 +905,8 @@ class Twitter:
         r_json = r.json()
         cookie = r_json["cookie"]
 
-        media_key = await self.get_space_info(id)["metadata"]["media_key"]
+        space = await self.get_space_info(id)
+        media_key = space["metadata"]["media_key"]
 
         r = await self._private_client.get(f"https://twitter.com/i/api/1.1/live_video_stream/status/{media_key}?client=web&use_syndication_guest_id=False&cookie_set_host=twitter.com", headers=headers)
         r.raise_for_status()
