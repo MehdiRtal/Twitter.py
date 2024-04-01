@@ -944,7 +944,7 @@ class Twitter:
             }
             r = await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/pingWatching", headers=headers, json=body)
             r.raise_for_status()
-            asyncio.sleep(30)
+            await asyncio.sleep(30)
 
     async def create_tweet(self, text: str):
         headers = {
