@@ -5,7 +5,6 @@ import random
 from bs4 import BeautifulSoup
 from fake_useragent import FakeUserAgent
 import hashlib
-import time
 import asyncio
 
 from twitter_py.models import Tweet, User
@@ -433,7 +432,7 @@ class Twitter:
                 "User-Agent": session["user_agent"]
             })
 
-            await self.solve_captcha()
+        await self.solve_captcha()
 
     async def solve_captcha(self):
         headers = {
@@ -945,7 +944,7 @@ class Twitter:
             }
             r = await self._private_client.post("https://proxsee.pscp.tv/api/v2/twitter/pingWatching", headers=headers, json=body)
             r.raise_for_status()
-            time.sleep(30)
+            asyncio.sleep(30)
 
     async def create_tweet(self, text: str):
         headers = {
@@ -1038,7 +1037,7 @@ class Twitter:
         return re.search(r"\/status\/(\d+)", url).group(1)
 
     def get_space_id(self, url: str):
-        return re.search(r"\/spaces\/([A-Za-z0-9]+)", url).group(1)
+        return re.search(r"\/spaces\/(\d+)", url).group(1)
 
     async def get_space_info(self, space_id: str):
         headers = {
