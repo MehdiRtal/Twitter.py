@@ -1037,7 +1037,7 @@ class Twitter:
         return re.search(r"\/status\/(\d+)", url).group(1)
 
     def get_space_id(self, url: str):
-        return re.search(r"\/spaces\/(\d+)", url).group(1)
+        return re.search(r"\/spaces\/([A-Za-z0-9]+)", url).group(1)
 
     async def get_space_info(self, space_id: str):
         headers = {
