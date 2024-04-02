@@ -445,7 +445,7 @@ class Twitter:
         r = await self._private_client.get("https://twitter.com/account/access", headers=headers, follow_redirects=True)
         r.raise_for_status()
 
-        if "access" in str(r.url):
+        if "/access" in str(r.url):
             soup = BeautifulSoup(r.text, "html.parser")
             authenticity_token = soup.find("input", {"name": "authenticity_token"}).get("value")
             assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
