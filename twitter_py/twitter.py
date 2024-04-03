@@ -9,7 +9,7 @@ import asyncio
 
 from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token, generate_transaction_id
-from twitter_py.exceptions import UserNotFound, TweetNotFound, InvalidCredentials, InvalidOTP, CaptchaFailed, InvalidEmail
+from twitter_py.exceptions import UserNotFound, TweetNotFound, InvalidCredentials, InvalidOTP, CaptchaFailed, InvalidEmail, InvalidToken
 
 
 class Twitter:
@@ -478,8 +478,8 @@ class Twitter:
                 assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
             else:
                 raise CaptchaFailed
-        elif "login" in str(r.url):
-            raise InvalidCredentials
+        elif "/login" in str(r.url):
+            raise InvalidToken
 
     async def change_password(self, password: str, new_password: str):
         headers = {
