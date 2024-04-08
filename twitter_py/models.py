@@ -17,6 +17,13 @@ class Tweet(BaseModel):
             AliasPath("legacy", "retweeted_status_result", "result", "rest_id"),
             AliasPath("tweet", "legacy", "retweeted_status_result", "result", "rest_id")
         ))
+    card_id: str = Field(
+        None,
+        validation_alias=AliasChoices(
+            AliasPath("card", "rest_id"),
+            AliasPath("tweet", "card", "rest_id")
+        )
+    )
     bookmark_count: int = Field(
         None,
         validation_alias=AliasChoices(

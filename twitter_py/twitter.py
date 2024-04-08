@@ -879,6 +879,32 @@ class Twitter:
         r = await self._private_client.post("https://twitter.com/i/api/graphql/aoDbu3RHznuiSkQ9aNM67Q/CreateBookmark", headers=headers, json=body)
         r.raise_for_status()
 
+    async def vote(self, tweet_id: int, card_id: int, choice: int):
+        headers = {
+            "Referer": "https://twitter.com/",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Csrf-Token": self.csrf_token,
+            "X-Twitter-Auth-Type": "OAuth2Session"
+        }
+        headers.update(self.graphql_headers)
+        body = {
+            "twitter": {
+                "string": {
+                    "card_uri": card_id,
+                    "response_card_name": "poll3choice_text_only",
+                    "cards_platform": "Web-12",
+                    "selected_choice": choice
+                },
+                "long": {
+                    "original_tweet_id": tweet_id
+                }
+            }
+        }
+        r = await self._private_client.post("https://caps.twitter.com/v2/capi/passthrough/1", headers=headers, data=body)
+        r.raise_for_status()
+
     async def watch_space(self, id: str, sleep_m: int):
         headers = {
             "Referer": "https://twitter.com/home",
