@@ -56,7 +56,7 @@ class Twitter:
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": self.user_agent
         }
-        r = await self._public_client.get("https://twitter.com/", headers=headers, follow_redirects=True)
+        r = await self._public_client.get("https://x.com/", headers=headers, follow_redirects=True)
         r.raise_for_status()
         if not len(self._private_client.cookies) == 1:
             self._private_client.cookies.update(r.cookies)
