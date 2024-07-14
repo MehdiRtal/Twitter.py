@@ -10,6 +10,10 @@ class InvalidCredentials(Exception):
     def __init__(self):
         super().__init__("Invalid credentials.")
 
+class AccountSuspended(Exception):
+    def __init__(self):
+        super().__init__("Account suspended.")
+
 class InvalidToken(Exception):
     def __init__(self):
         super().__init__("Invalid token.")
