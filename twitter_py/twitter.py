@@ -431,17 +431,6 @@ class Twitter:
             self._private_client.headers.update({
                 "User-Agent": session["user_agent"]
             })
-            headers = {
-                "Referer": "https://x.com/home",
-                "Sec-Fetch-Dest": "empty",
-                "Sec-Fetch-Mode": "cors",
-                "Sec-Fetch-Site": "same-origin",
-                "X-Csrf-Token": self.csrf_token,
-                "X-Twitter-Auth-Type": "OAuth2Session"
-            }
-            r = await self._private_client.post("https://x.com/i/api/1.1/keyregistry/register", headers=headers)
-            if r.status_code == 403:
-                raise AccountSuspended
 
         await self.solve_captcha()
 
