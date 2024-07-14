@@ -1,6 +1,6 @@
 [project]
 name = "twitter-py"
-version = "0.0.17"
+version = "0.0.18"
 authors = [
     { name = "MehdiRtal", email = "mehdirtal7@pm.me" }
 ]
