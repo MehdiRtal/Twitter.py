@@ -431,8 +431,28 @@ class Twitter:
             self._private_client.headers.update({
                 "User-Agent": session["user_agent"]
             })
-
         await self.solve_captcha()
+        await self.check_suspended()
+
+    async def check_suspended(self):
+        headers = {
+            "Referer": "https://x.com/home",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
+            "X-Csrf-Token": self.csrf_token,
+            "X-Twitter-Auth-Type": "OAuth2Session"
+        }
+        headers.update(self.graphql_headers)
+        params = {
+            "variables": json.dumps({"count":20,"includePromotedContent":True,"latestControlAvailable":True,"requestContext":"launch","withCommunity":True}),
+            "features": json.dumps({"rweb_tipjar_consumption_enabled":True,"responsive_web_graphql_exclude_directive_enabled":True,"verified_phone_label_enabled":False,"creator_subscriptions_tweet_preview_api_enabled":True,"responsive_web_graphql_timeline_navigation_enabled":True,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":False,"communities_web_enable_tweet_community_results_fetch":True,"c9s_tweet_anatomy_moderator_badge_enabled":True,"articles_preview_enabled":True,"tweetypie_unmention_optimization_enabled":True,"responsive_web_edit_tweet_api_enabled":True,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":True,"view_counts_everywhere_api_enabled":True,"longform_notetweets_consumption_enabled":True,"responsive_web_twitter_article_tweet_consumption_enabled":True,"tweet_awards_web_tipping_enabled":False,"creator_subscriptions_quote_tweet_preview_enabled":False,"freedom_of_speech_not_reach_fetch_enabled":True,"standardized_nudges_misinfo":True,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":True,"rweb_video_timestamps_enabled":True,"longform_notetweets_rich_text_read_enabled":True,"longform_notetweets_inline_media_enabled":True,"responsive_web_enhance_cards_enabled":False}),
+        }
+        r = await self._private_client.get("https://x.com/i/api/graphql/A_qu1009UoeQToazaP4YCg/HomeTimeline", headers=headers, params=params)
+        r.raise_for_status()
+        data = r.json()
+        if data["data"]["home"]["home_timeline_urt"]["instructions"][0]["entries"][0]["entryId"] == "messageprompt-suspended-prompt":
+            raise AccountSuspended
 
     async def solve_captcha(self):
         headers = {
@@ -746,7 +766,7 @@ class Twitter:
 
     async def reply(self, tweet_id: int, text: str):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://xcom/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -795,7 +815,7 @@ class Twitter:
             },
             "queryId": "oB-5XsHNAbjvARJEc8CZFw"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet", headers=headers, json=body)
         r.raise_for_status()
 
     async def retweet(self, tweet_id: int):
