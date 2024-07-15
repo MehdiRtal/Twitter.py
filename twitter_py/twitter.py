@@ -771,6 +771,7 @@ class Twitter:
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
             "X-Csrf-Token": self.csrf_token,
+            "X-Transaction-Id": "XMQjF972qC24OICkSQl2sowfDR0X2Yr7OldJ0ZPALLOfljyK4NpNRIdoPMwtdhkaUYy1GV7Ire7k7qdxXg2k0lKb6PmTXw",
             "X-Twitter-Auth-Type": "OAuth2Session"
         }
         headers.update(self.graphql_headers)
