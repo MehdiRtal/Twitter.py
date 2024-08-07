@@ -236,7 +236,7 @@ class Twitter:
                 await self._refresh_guest_token()
 
             headers = {
-                "Referer": "https://twitter.com/",
+                "Referer": "https://x.com/",
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
@@ -296,7 +296,7 @@ class Twitter:
                     "web_modal": 1
                 }
             }
-            r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json?flow_name=login", headers=headers, json=body)
+            r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json?flow_name=login", headers=headers, json=body)
             r.raise_for_status()
             data = r.json()
             flow_token = data["flow_token"]
@@ -313,7 +313,7 @@ class Twitter:
                     }
                 ]
             }
-            r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+            r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
             r.raise_for_status()
             data = r.json()
             flow_token = data["flow_token"]
@@ -339,7 +339,7 @@ class Twitter:
                     }
                 ]
             }
-            r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+            r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
             try:
                 r.raise_for_status()
                 data = r.json()
@@ -359,7 +359,7 @@ class Twitter:
                     }
                 ]
             }
-            r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+            r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
             try:
                 r.raise_for_status()
                 data = r.json()
@@ -378,7 +378,7 @@ class Twitter:
                     }
                 ]
             }
-            r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+            r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
             r.raise_for_status()
             data = r.json()
 
@@ -397,7 +397,7 @@ class Twitter:
                             }
                         ]
                     }
-                    r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+                    r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
                     try:
                         r.raise_for_status()
                     except Exception:
@@ -416,7 +416,7 @@ class Twitter:
                             }
                         ]
                     }
-                    r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+                    r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
                     try:
                         r.raise_for_status()
                     except Exception:
