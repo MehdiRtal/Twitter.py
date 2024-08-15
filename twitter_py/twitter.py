@@ -56,7 +56,7 @@ class Twitter:
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": self.user_agent
         }
-        r = await self._public_client.get("https://twitter.com/x/migrate?tok=eyJlIjoiLyIsInQiOjE3MTYyMTk5MDl9BDSWlrmJY9PiYYbf7V0FSw%3D%3D", headers=headers, follow_redirects=True)
+        r = await self._public_client.get("https://twitter.com/x/migrate?tok=7b2265223a222f222c2274223a313732333435363038327d5aeeb3ef98ff16b4eacc40c89a8ff4e2", headers=headers, follow_redirects=True)
         r.raise_for_status()
         if not len(self._private_client.cookies) == 1:
             self._private_client.cookies.update(r.cookies)
@@ -294,7 +294,7 @@ class Twitter:
                     "user_recommendations_urt": 1,
                     "wait_spinner": 3,
                     "web_modal": 1
-                }
+                    }
             }
             r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json?flow_name=login", headers=headers, json=body)
             r.raise_for_status()
@@ -307,7 +307,7 @@ class Twitter:
                     {
                         "subtask_id": "LoginJsInstrumentationSubtask",
                         "js_instrumentation": {
-                            "response": json.dumps({"rf":{"a09c71841bd9f4d27bd346884026bacaaf4e08e4df409437e1dfa0daa473e255":-244,"a4709145d8b647971ed8d008fbb71582dfabf395199016426a047f23e0856bb0":-175,"ac41dd06a5824fb7c0d7882007cc7d48bb6b787092915e56f83c53f31ee3dd08":72,"f851c0cbe720b43a67010f8f9b2c02b7c869023aa836f238a54e3f487fc7d686":-132},"s":"9JnhidShEmBkzvxgCzycTEICsjnNAU8h8kLJ9YeJdFaxiF8OxLN4Wb-m8DWZavJy9FOti-n1HLovSBet_nTxhVnXIYWFCRjHJQQ6zdYrGfT8etndSZIUMLetwaTceml0Wwju7EnVI2Ac4U08Dif3BqOCu7wgr2bAf5gKy4jCRn6X6-N_zpSltK6or8ma7rBm9bRRt2WG9WXQWna9cssbpOdL2b0ZBUh82rrKV5Q_xMiaDQsd_kXey_zbCA0o3mcy1KlGjWy2ZKIf7NI3sxuHcaWrTOgzuHJtSihoOdEHSEkFRVuv8G3-vadY3GQxVuIySI-eAQ6G5Q57pqBer25hDgAAAYsqkTND"}),
+                            "response": "{\"rf\":{\"a0c31dc7af71809a61f7f806f0e3cc6d4b512badb613b7efb33a79657fa3e0f9\":-124,\"a1d40174a732349eeff8ef71efd8971721abaf99277a1c124005a6feb6f4e9eb\":96,\"cc0bb613e70dee6c8f3a2c078c910bf474d4a21d41be94bb3680cff4a29d59f5\":-108,\"c08306c9c58ef153ac44aa4cf10622225ceb72bf60b30a2051188bea05bafa9b\":123},\"s\":\"r_aBSp-X-hy4vpvBRlcPBANA9NrHfpnG-W0dqg3-zkuZLXWJu-Si5-doXYdM8HAcKJP1s0LcuMN7xfiWyx08rvIdgp5WEXYBNzAJ37ip7JD-TTwZR3zcL5WaFFOTZ9fTha4a-5VQEwVz6JqXaMBIpKnUE_uhWaeG5m5k_9PmVm1ur9UroX1VsNVM1wBt-MiUbYRFPa-hN0jmu2eujdxof320TuYxUutmQW1l3G7nlyL5sw73ZgAmNS_J8eBnC-ZpjB7qA-Vn2z_MunKI_qe-C9OTu_drYgsVkjYyg-EqcoqLQSS8wzvp0CZ6YNpt7bokBZCuI4b_dHWO45br0LKMswAAAZFFvAYb\"}",
                             "link": "next_link"
                         }
                     }
