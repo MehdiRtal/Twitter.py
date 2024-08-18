@@ -232,7 +232,7 @@ class Twitter:
         if username and password:
             if not self.guest_token:
                 await self._refresh_guest_token()
-            print(self._private_client.cookies)
+
             headers = {
                 "Referer": "https://x.com/",
                 "Sec-Fetch-Dest": "empty",
