@@ -8,7 +8,7 @@ import hashlib
 import asyncio
 
 from twitter_py.models import Tweet, User
-from twitter_py.utils import generate_csrf_token, generate_transaction_id
+from twitter_py.utils import generate_csrf_token
 from twitter_py.exceptions import UserNotFound, TweetNotFound, InvalidCredentials, InvalidOTP, CaptchaFailed, InvalidEmail, InvalidToken, AccountSuspended
 
 
@@ -42,7 +42,7 @@ class Twitter:
     def graphql_headers(self):
         return {
             "Authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-            "X-Client-Transaction-Id": generate_transaction_id(),
+            "X-Client-Transaction-Id": "EqjcC+Oqz5rVgWFdZa+I58llasRyV8ro8eQlSvR8dPYKLaShdUkhgT2PV0QHokoKMJPHYBDVoFyik9MqBN2IQ0OQwUisEQ",
             "X-Twitter-Active-User": "yes",
             "X-Twitter-Client-Language": "en"
         }
@@ -56,10 +56,8 @@ class Twitter:
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": self.user_agent
         }
-        r = await self._public_client.get("https://twitter.com/x/migrate?tok=7b2265223a222f222c2274223a313732333435363038327d5aeeb3ef98ff16b4eacc40c89a8ff4e2", headers=headers, follow_redirects=True)
+        r = await self._private_client.get("https://twitter.com/x/migrate?tok=7b2265223a222f222c2274223a313732333435363038327d5aeeb3ef98ff16b4eacc40c89a8ff4e2", headers=headers, follow_redirects=True)
         r.raise_for_status()
-        if not len(self._private_client.cookies) == 1:
-            self._private_client.cookies.update(r.cookies)
         self.guest_token = re.search(r"gt=(\d+)", r.text).group(1)
 
     async def signup(self, name: str, email: str, password: str, otp_handler: callable):
@@ -128,7 +126,7 @@ class Twitter:
                 "web_modal": 1
             }
         }
-        r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json?flow_name=signup", headers=headers, json=body)
+        r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json?flow_name=signup", headers=headers, json=body)
         r.raise_for_status()
         data = r.json()
         flow_token = data["flow_token"]
@@ -138,7 +136,7 @@ class Twitter:
             "display_name": name,
             "flow_token": flow_token
         }
-        r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
+        r = await self._private_client.post("https://api.x.com/1.1/onboarding/begin_verification.json", headers=headers, json=body)
         r.raise_for_status()
 
         otp = await asyncio.to_thread(otp_handler)
@@ -204,7 +202,7 @@ class Twitter:
                 }
             ]
         }
-        r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+        r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
         try:
             r.raise_for_status()
             data = r.json()
@@ -224,7 +222,7 @@ class Twitter:
                 }
             ]
         }
-        r = await self._private_client.post("https://api.twitter.com/1.1/onboarding/task.json", headers=headers, json=body)
+        r = await self._private_client.post("https://api.x.com/1.1/onboarding/task.json", headers=headers, json=body)
         r.raise_for_status()
         data = r.json()
         self.session = json.dumps({"cookies": dict(self._private_client.cookies), "user_agent": self.user_agent})
@@ -234,7 +232,7 @@ class Twitter:
         if username and password:
             if not self.guest_token:
                 await self._refresh_guest_token()
-
+            print(self._private_client.cookies)
             headers = {
                 "Referer": "https://x.com/",
                 "Sec-Fetch-Dest": "empty",
