@@ -420,6 +420,7 @@ class Twitter:
                     except Exception:
                         raise InvalidOTP
 
+            print(self._private_client.cookies.get("auth_token"))
             self.session = json.dumps({"user_agent": self.user_agent})
         elif session:
             self.session = session
