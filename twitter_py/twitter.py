@@ -426,7 +426,7 @@ class Twitter:
             self.session = json.dumps({"session": base64.b64encode(pickle.dumps(self._private_client.cookies.jar._cookies)).decode(), "user_agent": self.user_agent})
         elif session:
             self.session = session
-            self._private_client.cookies.jar._cookies.update(pickle.loads(base64.b64decode(session["cookies"])))
+            self._private_client.cookies.jar._cookies.update(pickle.loads(base64.b64decode(session["session"])))
             self.csrf_token = self._private_client.cookies.get("ct0")
             self._private_client.headers.update({
                 "User-Agent": session["user_agent"]
