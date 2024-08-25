@@ -430,8 +430,8 @@ class Twitter:
             self._private_client.headers.update({
                 "User-Agent": session["user_agent"]
             })
-        await self.solve_captcha()
-        await self.check_suspended()
+        # await self.solve_captcha()
+        # await self.check_suspended()
 
     async def check_suspended(self):
         headers = {
