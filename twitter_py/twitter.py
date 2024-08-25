@@ -5,7 +5,9 @@ import random
 from bs4 import BeautifulSoup
 from fake_useragent import FakeUserAgent
 import hashlib
+import pickle
 import asyncio
+import base64
 
 from twitter_py.models import Tweet, User
 from twitter_py.utils import generate_csrf_token
@@ -420,13 +422,12 @@ class Twitter:
                     except Exception:
                         raise InvalidOTP
 
-            print(self._private_client.cookies.get("auth_token"))
-            self.session = json.dumps({"user_agent": self.user_agent})
+
+            self.session = json.dumps({"cookies": base64.b64encode(pickle.dumps(self._private_client.cookies.jar._cookies)).decode(), "user_agent": self.user_agent})
         elif session:
             self.session = session
-            session = json.loads(session)
-            self.csrf_token = session["cookies"]["ct0"]
-            self._private_client.cookies.update(session["cookies"])
+            self._private_client.cookies.jar._cookies.update(pickle.loads(base64.b64decode(session["cookies"])))
+            self.csrf_token = self._private_client.cookies.get("ct0")
             self._private_client.headers.update({
                 "User-Agent": session["user_agent"]
             })
