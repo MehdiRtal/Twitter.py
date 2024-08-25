@@ -423,7 +423,7 @@ class Twitter:
                         raise InvalidOTP
 
 
-            self.session = json.dumps({"cookies": base64.b64encode(pickle.dumps(self._private_client.cookies.jar._cookies)).decode(), "user_agent": self.user_agent})
+            self.session = json.dumps({"session": base64.b64encode(pickle.dumps(self._private_client.cookies.jar._cookies)).decode(), "user_agent": self.user_agent})
         elif session:
             self.session = session
             self._private_client.cookies.jar._cookies.update(pickle.loads(base64.b64decode(session["cookies"])))
