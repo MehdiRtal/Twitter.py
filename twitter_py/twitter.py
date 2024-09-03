@@ -67,7 +67,7 @@ class Twitter:
             await self._refresh_guest_token()
 
         headers = {
-            "Referer": "https://twitter.com/",
+            "Referer": "https://x.com/",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
@@ -475,7 +475,7 @@ class Twitter:
             assignment_token = soup.find("input", {"name": "assignment_token"}).get("value")
 
             headers.update({
-                "Referer": "https://twitter.com/account/access",
+                "Referer": "https://x.com/account/access",
             })
             for _ in range(3):
                 if not soup.find("form", {"id": "arkose_form"}):
@@ -507,7 +507,7 @@ class Twitter:
 
     async def change_password(self, password: str, new_password: str):
         headers = {
-            "Referer": "https://twitter.com/settings/password",
+            "Referer": "https://x.com/settings/password",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -520,13 +520,13 @@ class Twitter:
             "password": new_password,
             "password_confirmation": new_password
         }
-        r = await self._private_client.post("https://twitter.com/i/api/i/account/change_password.json", headers=headers, data=body)
+        r = await self._private_client.post("https://x.com/i/api/i/account/change_password.json", headers=headers, data=body)
         r.raise_for_status()
         self.session = r.cookies["auth_token"]
 
     async def change_email(self, password: str, new_email: str, otp_handler: callable):
         headers = {
-            "Referer": "https://twitter.com/",
+            "Referer": "https://x.com/",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
@@ -656,7 +656,7 @@ class Twitter:
     async def edit_profile(self, name: str = "", bio: str = "", location: str = "", avatar: bytes = None):
         if avatar:
             headers = {
-                "Referer": "https://twitter.com/",
+                "Referer": "https://x.com/",
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
@@ -714,7 +714,7 @@ class Twitter:
 
         if name or bio or location:
             headers = {
-                "Referer": "https://twitter.com/",
+                "Referer": "https://x.com/",
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-site",
@@ -735,7 +735,7 @@ class Twitter:
 
     async def like(self, tweet_id: int):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -749,12 +749,12 @@ class Twitter:
             },
             "queryId": "lI07N6Otwv1PhnEgXILM7A"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet", headers=headers, json=body)
         r.raise_for_status()
 
     async def follow(self, user_id: int):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -765,7 +765,7 @@ class Twitter:
         params = {
             "user_id": user_id
         }
-        r = await self._private_client.post("https://twitter.com/i/api/1.1/friendships/create.json", headers=headers, params=params)
+        r = await self._private_client.post("https://x.com/i/api/1.1/friendships/create.json", headers=headers, params=params)
         r.raise_for_status()
 
     async def reply(self, tweet_id: int, text: str):
@@ -825,7 +825,7 @@ class Twitter:
 
     async def retweet(self, tweet_id: int):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -840,12 +840,12 @@ class Twitter:
             },
             "queryId": "ojPdsZsimiJrUGLR1sjUtA"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet", headers=headers, json=body)
         r.raise_for_status()
 
     async def quote(self, url: str, text: str):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -887,12 +887,12 @@ class Twitter:
             },
             "queryId": "sgqau0P5BUJPMU_lgjpd_w"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/sgqau0P5BUJPMU_lgjpd_w/CreateTweet", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/sgqau0P5BUJPMU_lgjpd_w/CreateTweet", headers=headers, json=body)
         r.raise_for_status()
 
     async def bookmark(self, tweet_id: int):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -906,12 +906,12 @@ class Twitter:
             },
             "queryId": "aoDbu3RHznuiSkQ9aNM67Q"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/aoDbu3RHznuiSkQ9aNM67Q/CreateBookmark", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/aoDbu3RHznuiSkQ9aNM67Q/CreateBookmark", headers=headers, json=body)
         r.raise_for_status()
 
     async def vote(self, tweet_id: int, card_id: int, choice: int):
         headers = {
-            "Referer": "https://twitter.com/",
+            "Referer": "https://x.com/",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -937,7 +937,7 @@ class Twitter:
 
     async def watch_space(self, id: str, sleep_m: int):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -945,7 +945,7 @@ class Twitter:
             "X-Twitter-Auth-Type": "OAuth2Session"
         }
         headers.update(self.graphql_headers)
-        r = await self._private_client.get("https://twitter.com/i/api/1.1/oauth/authenticate_periscope.json", headers=headers)
+        r = await self._private_client.get("https://x.com/i/api/1.1/oauth/authenticate_periscope.json", headers=headers)
         r.raise_for_status()
         r_json = r.json()
         token = r_json["token"]
@@ -964,7 +964,7 @@ class Twitter:
         space = await self.get_space_info(id)
         media_key = space["metadata"]["media_key"]
 
-        r = await self._private_client.get(f"https://twitter.com/i/api/1.1/live_video_stream/status/{media_key}?client=web&use_syndication_guest_id=False&cookie_set_host=twitter.com", headers=headers)
+        r = await self._private_client.get(f"https://x.com/i/api/1.1/live_video_stream/status/{media_key}?client=web&use_syndication_guest_id=False&cookie_set_host=twitter.com", headers=headers)
         r.raise_for_status()
         r_json = r.json()
         chat_token = r_json["chatToken"]
@@ -1005,7 +1005,7 @@ class Twitter:
 
     async def create_tweet(self, text: str):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1047,12 +1047,12 @@ class Twitter:
             },
             "queryId": "5V_dkq1jfalfiFOEZ4g47A"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/5V_dkq1jfalfiFOEZ4g47A/CreateTweet", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/5V_dkq1jfalfiFOEZ4g47A/CreateTweet", headers=headers, json=body)
         r.raise_for_status()
 
     async def delete_tweet(self, tweet_id: int):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1067,12 +1067,12 @@ class Twitter:
             },
             "queryId": "VaenaVgh5q5ih7kvyVjgtg"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", headers=headers, json=body)
         r.raise_for_status()
 
     async def delete_retweet(self, tweet_id: int):
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1087,7 +1087,7 @@ class Twitter:
             },
             "queryId": "iQtK4dl5hBmXewYZuEOKVw"
         }
-        r = await self._private_client.post("https://twitter.com/i/api/graphql/iQtK4dl5hBmXewYZuEOKVw/DeleteRetweet", headers=headers, json=body)
+        r = await self._private_client.post("https://x.com/i/api/graphql/iQtK4dl5hBmXewYZuEOKVw/DeleteRetweet", headers=headers, json=body)
         r.raise_for_status()
 
     def get_tweet_id(self, url: str):
@@ -1138,13 +1138,13 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             }),
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/MZwo_AA10ZpJfbY4ZekqQA/AudioSpaceById", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/MZwo_AA10ZpJfbY4ZekqQA/AudioSpaceById", headers=headers, params=params)
         r.raise_for_status()
         return r.json()["data"]["audioSpace"]
 
     async def get_tweet_info(self, tweet_id: int) -> Tweet:
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1189,7 +1189,7 @@ class Twitter:
                 "withArticleRichContentState": False
             })
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/3XDB26fBve-MmjHaWTUZxA/TweetDetail", headers=headers, params=params)
         r.raise_for_status()
         if not r.json()["data"]:
             raise TweetNotFound
@@ -1199,7 +1199,7 @@ class Twitter:
 
     async def get_tweet_likes(self, tweet_id: int) -> list[User]:
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1236,7 +1236,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             })
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/3Y3356PTjeY9RfKYULEtng/Favoriters", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/3Y3356PTjeY9RfKYULEtng/Favoriters", headers=headers, params=params)
         r.raise_for_status()
         for instruction in r.json()["data"]["favoriters_timeline"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
@@ -1248,7 +1248,7 @@ class Twitter:
 
     async def get_tweet_retweets(self, tweet_id: int) -> list[User]:
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1285,7 +1285,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             })
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/EvCvYif_Wh6UgW1nQunmLA/Retweeters", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/EvCvYif_Wh6UgW1nQunmLA/Retweeters", headers=headers, params=params)
         r.raise_for_status()
         for instruction in r.json()["data"]["retweeters_timeline"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
@@ -1297,7 +1297,7 @@ class Twitter:
 
     async def get_tweet_quotes(self, tweet_id: int) -> list[Tweet]:
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1335,7 +1335,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             })
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/flaR-PUMshxFWZWPNpq4zA/SearchTimeline", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/flaR-PUMshxFWZWPNpq4zA/SearchTimeline", headers=headers, params=params)
         r.raise_for_status()
         for instruction in r.json()["data"]["search_by_raw_query"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
@@ -1377,7 +1377,7 @@ class Twitter:
                 "withAuxiliaryUserLabels": False
             }),
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/k5XapwcSikNsEsILW5FvgA/UserByScreenName", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/k5XapwcSikNsEsILW5FvgA/UserByScreenName", headers=headers, params=params)
         r.raise_for_status()
         if not r.json()["data"]:
             raise UserNotFound
@@ -1385,7 +1385,7 @@ class Twitter:
 
     async def get_user_tweets(self, user_id: int) -> list[Tweet]:
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1426,7 +1426,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             })
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/VgitpdpNZ-RUIp5D1Z_D-A/UserTweets", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/VgitpdpNZ-RUIp5D1Z_D-A/UserTweets", headers=headers, params=params)
         r.raise_for_status()
         if not r.json()["data"]["user"]:
             raise TweetNotFound
@@ -1440,7 +1440,7 @@ class Twitter:
 
     async def get_user_followers(self, user_id: int) -> list[User]:
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1477,7 +1477,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             })
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/Uc7ZOJrxsJAzMVCcaxis8Q/Followers", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/Uc7ZOJrxsJAzMVCcaxis8Q/Followers", headers=headers, params=params)
         r.raise_for_status()
         for instruction in r.json()["data"]["user"]["result"]["timeline"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
@@ -1489,7 +1489,7 @@ class Twitter:
 
     async def get_user_following(self, user_id: int) -> list[User]:
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -1526,7 +1526,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             })
         }
-        r = await self._private_client.get("https://twitter.com/i/api/graphql/PiHWpObvX9tbClrUl6rL9g/Following", headers=headers, params=params)
+        r = await self._private_client.get("https://x.com/i/api/graphql/PiHWpObvX9tbClrUl6rL9g/Following", headers=headers, params=params)
         r.raise_for_status()
         for instruction in r.json()["data"]["user"]["result"]["timeline"]["timeline"]["instructions"]:
             if instruction["type"] == "TimelineAddEntries":
@@ -1580,7 +1580,7 @@ class Twitter:
                 "responsive_web_enhance_cards_enabled": False
             }),
         }
-        r = await self._public_client.get("https://twitter.com/i/api/graphql/MZwo_AA10ZpJfbY4ZekqQA/AudioSpaceById", headers=headers, params=params)
+        r = await self._public_client.get("https://x.com/i/api/graphql/MZwo_AA10ZpJfbY4ZekqQA/AudioSpaceById", headers=headers, params=params)
         r.raise_for_status()
         return r.json()["data"]["audioSpace"]
 
@@ -1629,7 +1629,7 @@ class Twitter:
             await self._refresh_guest_token()
 
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
@@ -1681,7 +1681,7 @@ class Twitter:
             await self._refresh_guest_token()
 
         headers = {
-            "Referer": "https://twitter.com/home",
+            "Referer": "https://x.com/home",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
